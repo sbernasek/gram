@@ -101,11 +101,13 @@ class EnvironmentSimulation(PerturbationSimulation):
         for condition in self.comparisons.keys():
             self.comparisons[condition] = super().run(condition, N=N, **kwargs)
 
-    def visualize(self, axes=None):
+    def plot_comparison(self, trajectories=False, axes=None):
         """
         Visualize comparison for each environmental condition.
 
         Args:
+
+            trajectories (bool) - if True, plot individual trajectories
 
             axes (tuple) - matplotlib.axes.AxesSubplot for each condition
 
@@ -114,12 +116,18 @@ class EnvironmentSimulation(PerturbationSimulation):
         # create axes if none were provided
         if axes is None:
             ncols = self.N
-            figsize=(ncols*3, 2)
+            figsize=(ncols*2.5, 2)
             fig, axes = plt.subplots(1, ncols, sharey=True, figsize=figsize)
 
         # visualize comparison under each condition
         for i, (condition, comparison) in enumerate(self.comparisons.items()):
-            comparison.visualize(ax=axes[i])
+
+            if trajectories:
+                comparison.plot_outlying_trajectories(ax=axes[i])
+            else:
+                comparison.shade_outlying_areas(ax=axes[i])
             axes[i].set_title(self.condition_names[condition])
 
         axes[0].set_ylabel('Protein level')
+
+        plt.tight_layout()

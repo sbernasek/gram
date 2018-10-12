@@ -1,7 +1,7 @@
 # external package imports
 
 # internal imports
-from ..analysis.comparison import AreaComparison
+from ..analysis.comparison import Comparison, AreaComparison, CDFComparison
 from .pulse import PulseSimulation
 
 
@@ -94,7 +94,7 @@ class PerturbationSimulation(PulseSimulation):
 
         return ts_wildtype, ts_mutant
 
-    def run(self, condition='normal', N=100, **kwargs):
+    def run(self, condition='normal', N=100, comparison_type=None, **kwargs):
         """
         Run simulation under the specified conditions and compare dynamics between wildtype and mutant.
 
@@ -104,11 +104,13 @@ class PerturbationSimulation(PulseSimulation):
 
             N (int) - number of independent simulation trajectories
 
+            comparison_type (str) - comparison type, e.g. 'empirical', 'area' or 'cdf'. Defaults to empirical.
+
             kwargs: keyword arguments for comparison
 
         Returns:
 
-            comparison (AreaComparison)
+            comparison (Comparison derivative)
 
         """
 
@@ -116,6 +118,11 @@ class PerturbationSimulation(PulseSimulation):
         ts0, ts1 = self.simulate(condition, N)
 
         # evaluate comparison
-        comparison = AreaComparison(ts0, ts1, **kwargs)
+        if comparison_type in (None, 'empirical'):
+            comparison = Comparison(ts0, ts1, **kwargs)
+        if comparison_type == 'area':
+            comparison = AreaComparison(ts0, ts1, **kwargs)
+        elif comparison_type == 'cdf':
+            comparison = CDFComparison(ts0, ts1, **kwargs)
 
         return comparison

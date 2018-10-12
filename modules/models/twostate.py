@@ -71,7 +71,7 @@ class TwoStateModel(TwoStateCell, Mutation):
 
     def add_transcriptional_feedback(self,
                                      k=None,
-                                     atp_sensitive=True,
+                                     atp_sensitive=2,
                                      ribosome_sensitive=True,
                                      **kwargs):
         """
