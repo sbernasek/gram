@@ -1,3 +1,5 @@
+from os.path import join, isdir
+from os import mkdir
 from collections import OrderedDict
 import matplotlib.pyplot as plt
 
@@ -87,6 +89,71 @@ class EnvironmentSimulation(PerturbationSimulation):
         """ Number of environmental conditions. """
         return len(self.comparisons)
 
+    @classmethod
+    def load(cls, path):
+        """
+        Load simulation from file.
+
+        Args:
+
+            path (str) - file path
+
+        Returns:
+
+            simulation (EnvironmentSimulation)
+
+        """
+
+        # load serialized simulation instance
+        simulation = super(cls, cls).load(join(path, 'simulation.pkl'))
+
+        # load simulation trajectories (if available)
+        for condition, comparison in simulation.comparisons.items():
+
+            # check that directory exists
+            subdir = join(path, condition)
+            if not isdir(subdir):
+                continue
+
+             # load simulation trajectories for control
+            control_dir = join(subdir, 'control')
+            if isdir(control_dir):
+                comparison.reference = comparison.tstype.load(control_dir)
+
+            # load simulation trajectories for perturbation
+            perturbation_dir = join(subdir, 'perturbation')
+            if isdir(perturbation_dir):
+                comparison.compared = comparison.tstype.load(perturbation_dir)
+
+        return simulation
+
+    def save(self, path, saveall=False):
+        """
+        Save simulation to file. Simulations are saved as serialized pickle objects. TimeSeries data may optionally be saved as numpy arrays.
+
+        Args:
+
+            path (str) - save destination
+
+            saveall (bool) - if True, save timeseries data
+
+        """
+
+        if saveall:
+            for condition, comparison in self.comparisons.items():
+
+                # make a directory
+                subdir = join(path, condition)
+                if not isdir(subdir):
+                    mkdir(subdir)
+
+                # save simulation trajectories
+                comparison.reference.save(join(subdir, 'control'))
+                comparison.compared.save(join(subdir, 'perturbation'))
+
+        # save serialized object
+        super().save(join(path, 'simulation.pkl'))
+
     def run(self, N=100, **kwargs):
         """
         Run simulation and evaluate comparison between wildtype and mutant for each environmental condition.
@@ -127,6 +194,10 @@ class EnvironmentSimulation(PerturbationSimulation):
             else:
                 comparison.shade_outlying_areas(ax=axes[i])
             axes[i].set_title(self.condition_names[condition])
+
+        # display error metrics on plot
+        for i, comparison in enumerate(self.comparisons.values()):
+            comparison.display_metrics(axes[i])
 
         axes[0].set_ylabel('Protein level')
 

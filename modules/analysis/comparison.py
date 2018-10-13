@@ -29,6 +29,8 @@ class Comparison:
 
         error (float) - total non-overalpping fraction of confidence band
 
+        tstype (type) - reference/compared type
+
     Properties:
 
         t (np.ndarray[float]) - reference timepoints
@@ -61,12 +63,18 @@ class Comparison:
         self.dim = dim
         self.reference = reference
         self.compared = compared
+        self.tstype = self.reference.__class__
 
         # evaluate comparison metric
         below, above = self.evaluate()
         self.below = below
         self.above = above
         self.error = below + above
+
+    def __getstate__(self):
+        """ Returns all attributes except TimeSeries instances. """
+        excluded = ('reference', 'compared')
+        return {k: v for k, v in self.__dict__.items() if k not in excluded}
 
     @property
     def t(self):
@@ -316,7 +324,7 @@ class Comparison:
         ax.set_xlabel('Time (h)')
 
         # display comparison metrics
-        self.display_metrics(ax)
+        #self.display_metrics(ax)
 
     def display_metrics(self, ax):
         """
@@ -331,7 +339,7 @@ class Comparison:
         x = ax.get_xlim()[1] - 0.05*ax.get_xticks().ptp()
         y = ax.get_ylim()[1] - 0.05*ax.get_yticks().ptp()
 
-        kw = dict(ha='right', va='top')
+        kw = dict(ha='right', va='top', fontsize=8)
         ax.text(x, y, '{:0.1%} error'.format(self.error), **kw)
         ax.text(x, y, '\n{:0.1%} above'.format(self.above), color='r', **kw)
         ax.text(x, y, '\n\n{:0.1%} below'.format(self.below), color='b', **kw)
@@ -554,7 +562,7 @@ class ThresholdComparison(CDFComparison):
         """ Fraction of trajectories exceeding threshold at index. """
         return self.fractions_above[self.commitment_time[-1]]
 
-    def shade_outlying_areas(self, alpha=0.5, ax=None):
+    def plot_outlying_trajectories(self, alpha=0.5, ax=None):
         """
         Visualize comparison by shading the region encompassing trajectories that lie below or above all reference trajectories.
 
@@ -584,11 +592,6 @@ class ThresholdComparison(CDFComparison):
         ax.plot(t, rbounds[0][ind], '-k')
         ax.plot(t, rbounds[1][ind], '-k')
 
-        # plot confidence band for compared
-        #ax.fill_between(t, cbounds[0][ind], cbounds[1][ind], **kw)
-        #ax.plot(t, cbounds[0][ind], '--k')
-        #ax.plot(t, cbounds[1][ind], '--k')
-
         # assemble segments of trajectories below/above reference extrema
         segments_above = []
         for x in self.compared.states[:, self.dim, ind]:
@@ -604,8 +607,8 @@ class ThresholdComparison(CDFComparison):
         # compile line objects
         lines_above = LineCollection(segments_above, colors='r')
         ax.add_collection(lines_above)
-
         ax.set_xlim(0, self.t.max())
+        ax.set_ylim(0, self.compared.upper[self.dim].max())
 
         # display threshold definition
         self.display_threshold_definition(ax)
@@ -644,6 +647,7 @@ class ThresholdComparison(CDFComparison):
         peak_value = self.reference.peaks[self.dim]
 
         max_error = self.compared.upper[self.dim][self.commitment_time[-1]]
+
 
         # add vertical arrow defining threshold value
         ax.annotate(text='',

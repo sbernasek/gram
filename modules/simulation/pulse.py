@@ -2,6 +2,7 @@
 import numpy as np
 import warnings
 from copy import copy
+import pickle
 from genessa.signals.signals import cSignal, cSquarePulse
 from genessa.solver.deterministic import DeterministicSimulation
 from genessa.solver.stochastic import MonteCarloSimulation
@@ -79,6 +80,36 @@ class PulseSimulation:
         self.pulse_baseline = pulse_baseline
         self.pulse_magnitude = pulse_magnitude
         self.pulse_sensitive = pulse_sensitive
+
+    @staticmethod
+    def load(path):
+        """
+        Load simulation from file.
+
+        Args:
+
+            path (str) - file path
+
+        Returns:
+
+            simulation (PulseSimulation derivative)
+
+        """
+        with open(path, 'rb') as file:
+            simulation = pickle.load(file)
+        return simulation
+
+    def save(self, path):
+        """
+        Save simulation to file. Simulations are saved as serialized pickle objects.
+
+        Args:
+
+            path (str) - filepath
+
+        """
+        with open(path, 'wb') as file:
+            pickle.dump(self, file, protocol=-1)
 
     def evaluate_steady_state(self, cell, condition='normal', tol=1e-2):
         """

@@ -2,6 +2,7 @@
 
 # internal imports
 from ..analysis.comparison import Comparison, AreaComparison, CDFComparison
+from ..analysis.comparison import ThresholdComparison
 from .pulse import PulseSimulation
 
 
@@ -104,7 +105,7 @@ class PerturbationSimulation(PulseSimulation):
 
             N (int) - number of independent simulation trajectories
 
-            comparison_type (str) - comparison type, e.g. 'empirical', 'area' or 'cdf'. Defaults to empirical.
+            comparison_type (str) - comparison type e.g. 'empirical', 'area', 'cdf' or 'threshold'. Defaults to 'empirical'.
 
             kwargs: keyword arguments for comparison
 
@@ -118,11 +119,13 @@ class PerturbationSimulation(PulseSimulation):
         ts0, ts1 = self.simulate(condition, N)
 
         # evaluate comparison
-        if comparison_type in (None, 'empirical'):
+        if comparison_type == 'empirical' or comparison_type is None:
             comparison = Comparison(ts0, ts1, **kwargs)
-        if comparison_type == 'area':
+        elif comparison_type == 'area':
             comparison = AreaComparison(ts0, ts1, **kwargs)
         elif comparison_type == 'cdf':
             comparison = CDFComparison(ts0, ts1, **kwargs)
+        elif comparison_type == 'threshold':
+            comparison = ThresholdComparison(ts0, ts1, **kwargs)
 
         return comparison

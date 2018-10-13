@@ -12,8 +12,8 @@ ticklabelsize = 7
 
 # font params
 plt.rcParams['font.size'] = ticklabelsize
-plt.rcParams['font.family'] = 'sans-serif'
-plt.rcParams['font.sans-serif'] = ['Arial']
+#plt.rcParams['font.family'] = 'sans-serif'
+#plt.rcParams['font.sans-serif'] = ['Arial']
 plt.rcParams['pdf.fonttype'] = 42
 plt.rcParams['ps.fonttype'] = 42
 
