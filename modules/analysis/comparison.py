@@ -59,8 +59,6 @@ class Comparison:
 
         # store attributes
         self.dim = dim
-
-        # instantiate gaussian models for confidence band
         self.reference = reference
         self.compared = compared
 
@@ -202,31 +200,6 @@ class Comparison:
         lbound = np.vstack((rbounds[1], cbounds[0])).max(axis=0)
         ubound = cbounds[1]
         return indices, lbound, ubound
-
-    def plot_trajectories(self, colors=None, ax=None, **kwargs):
-        """
-        Plot simulated trajectories.
-
-        Args:
-
-            colors (tuple) - color for reference and compared trajectories
-
-            ax (matplotlib.axes.AxesSubplot) - if None, create figure
-
-            kwargs: keyword arguments for plotting
-
-        """
-
-        # create figure if axes weren't provided
-        if ax is None:
-            fig, ax = plt.subplots(figsize=(3, 2))
-
-        if colors is None:
-            colors = (('k',), ('r',))
-
-        # plot trajectories
-        self.reference.plot(dims=(self.dim,), ax=ax, colors=colors[0])
-        self.compared.plot(dims=(self.dim,), ax=ax, colors=colors[1])
 
     def shade_outlying_areas(self, alpha=0.5, ax=None):
         """
@@ -502,3 +475,197 @@ class CDFComparison(Comparison):
     def fractions_above(self):
         """ Fractions of trajectories above the highest reference. """
         return 1 - self.compared.norm.cdf(self.upper)[self.dim]
+
+
+class ThresholdComparison(CDFComparison):
+    """
+    Class for comparing a timeseries against a reference. Comparison is based on evaluating the fraction of the compared timeseries that lies above a threshold defined relative to the reference timeseries.
+
+
+    Inherited Attributes:
+
+        reference (GaussianModel) - reference timeseries
+
+        compared (GaussianModel) - timeseries to be compared
+
+        dim (int) - state space dimension to be compared
+
+    Properties:
+
+        t (np.ndarray[float]) - reference timepoints
+
+        lower (np.ndarray[float]) - lower bound for reference trajectories
+
+        upper (np.ndarray[float]) - upper bound for reference trajectories
+
+        fractions_below (np.ndarray[float]) - fractions below lower bound
+
+        fractions_above (np.ndarray[float]) - fractions above upper bound
+
+        error (float) - fraction of trajectories exceeding threshold
+
+    """
+
+    def __init__(self,
+        reference,
+        compared,
+        fraction_of_max=0.3,
+        bandwidth=.98,
+        dim=-1):
+        """
+        Instantiate timeseries comparison object.
+
+        Args:
+
+            reference (TimeSeries) - reference timeseries
+
+            compared (TimeSeries) - timeseries to be compared
+
+            fraction_of_max (float) - fraction of peak mean reference value used as threshold
+
+            bandwidth (float) - width of confidence band, 0 to 1
+
+            dim (int) - state space dimension to be compared
+
+        """
+
+        # store attributes
+        self.dim = dim
+        self.fraction_of_max = fraction_of_max
+
+        # fit gaussian models to timeseries
+        self.reference = GaussianModel.from_timeseries(reference, bandwidth)
+        self.compared = GaussianModel.from_timeseries(compared, bandwidth)
+
+    @property
+    def threshold(self):
+        """ Commitment threshold. """
+        return self.reference.peaks[self.dim] * self.fraction_of_max
+
+    @property
+    def commitment_time(self):
+        """ Index of time at which reference reaches threshold. """
+        indices = self.reference.index(self.threshold, self.dim, mode='upper')
+        assert indices.size > 0, 'Did not reach specified threshold.'
+        return indices
+
+    @property
+    def error(self):
+        """ Fraction of trajectories exceeding threshold at index. """
+        return self.fractions_above[self.commitment_time[-1]]
+
+    def shade_outlying_areas(self, alpha=0.5, ax=None):
+        """
+        Visualize comparison by shading the region encompassing trajectories that lie below or above all reference trajectories.
+
+        Args:
+
+            alpha (float) - opacity for shaded regions of confidence band
+
+            ax (matplotlib.axes.AxesSubplot) - if None, create figure
+
+        """
+
+        # create figure if axes weren't provided
+        if ax is None:
+            fig, ax = plt.subplots(figsize=(3, 2))
+
+        # extract bounds for confidence bands
+        rbounds = (self.lower, self.upper)
+        cbounds = (self.compared.lower[self.dim],self.compared.upper[self.dim])
+
+        # get indices of timepoints before threshold
+        ind = np.arange(self.t.size) < self.commitment_time[-1]
+        t = self.t[ind]
+        kw = dict(color='k', alpha=0.2)
+
+        # plot confidence band for reference
+        ax.fill_between(t, rbounds[0][ind], rbounds[1][ind], **kw)
+        ax.plot(t, rbounds[0][ind], '-k')
+        ax.plot(t, rbounds[1][ind], '-k')
+
+        # plot confidence band for compared
+        #ax.fill_between(t, cbounds[0][ind], cbounds[1][ind], **kw)
+        #ax.plot(t, cbounds[0][ind], '--k')
+        #ax.plot(t, cbounds[1][ind], '--k')
+
+        # assemble segments of trajectories below/above reference extrema
+        segments_above = []
+        for x in self.compared.states[:, self.dim, ind]:
+            above = x > rbounds[1][ind]
+
+            # select outlying line segments
+            ind_a = np.split(np.arange(x.size), np.diff(above).nonzero()[0]+1)
+            ia = list(filter(lambda i: np.all(above[i]), ind_a))
+
+            # append line segments to lists
+            segments_above.extend([list(zip(self.t[i], x[i])) for i in ia])
+
+        # compile line objects
+        lines_above = LineCollection(segments_above, colors='r')
+        ax.add_collection(lines_above)
+
+        ax.set_xlim(0, self.t.max())
+
+        # display threshold definition
+        self.display_threshold_definition(ax)
+
+        # format axis
+        self.format_axis(ax)
+
+    def display_metrics(self, ax):
+        """
+        Display comparison metrics on axes.
+
+        Args:
+
+            ax (matplotlib.axes.AxesSubplot)
+
+        """
+
+        x = ax.get_xlim()[1] - 0.05*ax.get_xticks().ptp()
+        y = ax.get_ylim()[1] - 0.05*ax.get_yticks().ptp()
+
+        kw = dict(ha='right', va='top')
+        ax.text(x, y, '{:0.1%} error'.format(self.error), **kw)
+
+    def display_threshold_definition(self, ax):
+        """
+        Display arrows defining threshold and commitment time.
+
+        Args:
+
+            ax (matplotlib.axes.AxesSubplot)
+
+        """
+        # plot threshold geometry
+        peak_time = self.t[self.reference.peak_indices[self.dim]]
+        threshold_time = self.t[self.commitment_time[-1]]
+        peak_value = self.reference.peaks[self.dim]
+
+        max_error = self.compared.upper[self.dim][self.commitment_time[-1]]
+
+        # add vertical arrow defining threshold value
+        ax.annotate(text='',
+                    xy=(peak_time, self.threshold),
+                    xytext=(peak_time, peak_value),
+                    arrowprops=dict(arrowstyle='<->', shrinkA=0, shrinkB=0))
+
+        # add horizontal arrow defining commitment time
+        ax.annotate(text='',
+                    xy=(peak_time, self.threshold),
+                    xytext=(threshold_time, self.threshold),
+                    arrowprops=dict(arrowstyle='<->', shrinkA=0, shrinkB=0))
+
+        # add vertical arrow defining error
+        ax.annotate(text='',
+                    xy=(2+threshold_time, self.threshold),
+                    xytext=(2+threshold_time, max_error),
+                    arrowprops=dict(arrowstyle='<->', shrinkA=0, shrinkB=0, color='r'))
+
+        # annotate error
+        ax.text(threshold_time+4,
+                (self.threshold+max_error)/2,
+                'error',
+                ha='left',
+                va='center')
