@@ -92,7 +92,7 @@ class Sweep:
 
         # copy run script to scripts directory
         run_path = join(abspath(__file__).rsplit('/', maxsplit=1)[0], 'run.py')
-        shutil.copy(run_path, join(self.path, 'scripts'))
+        shutil.copy(run_path, join(path, 'scripts'))
 
         # declare outer script that reads PATH from file
         job_script = open(job_path, 'w')
