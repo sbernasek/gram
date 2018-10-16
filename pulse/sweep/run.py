@@ -1,5 +1,5 @@
 import sys
-from modules.simulation.environment import ConditionSimulation
+from pulse.simulation.environment import ConditionSimulation
 
 # get simulation path
 path = sys.argv[1]

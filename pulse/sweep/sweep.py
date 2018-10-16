@@ -1,5 +1,5 @@
 from os.path import join, abspath, relpath, isdir
-from os import mkdir, chmod
+from os import mkdir, chmod, pardir
 import shutil
 import pickle
 import numpy as np
@@ -11,86 +11,6 @@ from ..simulation.environment import ConditionSimulation
 from ..models.linear import LinearModel
 from ..models.hill import HillModel
 from ..models.twostate import TwoStateModel
-
-
-
-
-
-def build_executable(self, PATH):
-    """
-    Write executable script to delegate all jobs to work nodes.
-
-    Args:
-
-
-
-    """
-
-    # write executable file to run all scripts
-    runfile = os.path.join(PATH, 'run.sh')
-    with open(runfile, 'w') as wcfile:
-        wcfile.write('#!/bin/bash\n\n')
-        wcfile.write('for file in msub\_job\_script*.sh; do msub $file; done')
-        wcfile.close()
-    os.chmod(run_scripts, 0o755)
-
-
-def build_jobscript(self, job_id):
-    """
-    Write job script for individual simulation.
-
-    Args:
-
-    """
-
-
-
-
-    # open the job script and name it
-    job_path = join(self.scripts_path, 'jobscript_{:d}.sh'.format(job_id))
-    job_script = open(job_path, 'w')
-
-    # define script language
-    job_script.write('#! /bin/bash\n')
-
-    # required
-    job_script.write('#MSUB -A p30653 \n')
-    job_script.write('#MSUB -q short \n')
-    job_script.write('#MSUB -l walltime=04:00:00 \n')
-
-    # optional
-    job_script.write('#MSUB -m abe \n')
-    job_script.write('#MSUB -M sebastian@u.northwestern.edu \n')
-    job_script.write('#MSUB -j oe \n')
-    job_script.write('#MSUB -N %s \n' % job_id)
-
-    # resource requirements
-    job_script.write('#MSUB -l nodes=500:ppn=1 \n')
-    job_script.write('#MSUB -l mem=1gb \n')
-
-    # write all Torque parameters
-    job_script.write('#MSUB -d %s\n' % sim_path) # directory of execution
-
-    job_script.write('python ./run_parameters.py %s \n' % PARAMETER)
-
-    # close the file
-    job_script.close()
-
-    # change the permissions
-    os.chmod(job_path, 0o755)
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 class Sweep:
@@ -262,7 +182,8 @@ class Sweep:
         job_path = join(sweep_path, 'scripts', 'job_submission.sh')
 
         # copy run script to scripts directory
-        shutil.copy('./run.py', join(self.path, 'scripts'))
+        run_path = join(abspath(__file__).rsplit('/', maxsplit=1)[0], 'run.py')
+        shutil.copy(run_path, join(self.path, 'scripts'))
 
         # declare outer script that reads PATH from file
         job_script = open(job_path, 'w')
