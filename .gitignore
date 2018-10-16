@@ -2,4 +2,4 @@ notebooks/*
 *.pyc
 *.prof
 *.ipynb
-pulse.egg-info
+*.egg-info

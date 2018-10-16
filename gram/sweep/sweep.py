@@ -121,6 +121,10 @@ class Sweep:
         with open(join(self.path, 'sweep.pkl'), 'wb') as file:
             pickle.dump(self, file, protocol=-1)
 
+        # build parameter file and submission script
+        self.write_paths_file()
+        self.build_submission_script()
+
     @staticmethod
     def build_model(parameters):
         """
