@@ -77,3 +77,6 @@ sweep_obj.build(
     saveall=args['saveall'],
     use_deviations=args['use_deviations'],
     allocation=args['allocation'])
+
+# USEFUL COMMANDS
+# showq -w acct=p30653

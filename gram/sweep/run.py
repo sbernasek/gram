@@ -16,7 +16,7 @@ parser.add_argument('path',
 # save simulation trajectories
 parser.add_argument('-S', '--saveall',
                     help='Save simulation trajectories.',
-                    type=bool,
+                    type=int,
                     default=False,
                     required=False)
 
@@ -30,7 +30,7 @@ parser.add_argument('-N', '--trajectories',
 # number of trajectories
 parser.add_argument('-D', '--use_deviations',
                     help='Use deviation variables.',
-                    type=bool,
+                    type=int,
                     default=False,
                     required=False)
 
@@ -43,7 +43,7 @@ simulation = ConditionSimulation.load(args['path'])
 
 # run simulation and comparison
 simulation.simulate(N=args['trajectories'])
-simulation.compare(deviations=args['use_deviations'], inplace=True)
+simulation.compare(deviations=bool(args['use_deviations']), inplace=True)
 
 # save simulation
-simulation.save(path, saveall=args['saveall'])
+simulation.save(path, saveall=bool(args['saveall']))

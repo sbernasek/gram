@@ -114,13 +114,16 @@ class Sweep:
         job_script.write('#MSUB -m abe \n')
         #job_script.write('#MSUB -M sebastian@u.northwestern.edu \n')
         job_script.write('#MSUB -o ${P}/stdout.txt\n')
-        job_script.write('#MSUB -r ${P}/stderr.txt\n')
+        job_script.write('#MSUB -e ${P}/stderr.txt\n')
         #job_script.write('#MSUB -N %s \n' % job_id)
         job_script.write('#MSUB -l nodes=1:ppn=2 \n')
         job_script.write('#MSUB -l mem=1gb \n\n')
 
         # load python module
         job_script.write('module load python/anaconda3.6\n\n')
+
+        # move to sweep directory
+        job_script.write('cd {:s} \n\n'.format(sweep_path))
 
         # run script
         job_script.write('python ./scripts/run.py ${P}')
@@ -272,6 +275,12 @@ class Sweep:
 
         # save simulation
         simulation.save(simulation_path)
+
+        # create output and error files
+        stdout = open(join(simulation_path, 'stdout.txt'), 'w')
+        stdout.close()
+        stderr = open(join(simulation_path, 'stderr.txt'), 'w')
+        stderr.close()
 
 
 class LinearSweep(Sweep):
