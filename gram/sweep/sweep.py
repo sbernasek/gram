@@ -113,10 +113,11 @@ class Sweep:
         job_script.write('#MSUB -l walltime=04:00:00 \n')
         job_script.write('#MSUB -m abe \n')
         #job_script.write('#MSUB -M sebastian@u.northwestern.edu \n')
-        job_script.write('#MSUB -oe\n')
-        #job_script.write('#MSUB -N %s \n' % job_id)
+        job_script.write('#MSUB -o ${P}/outlog \n')
+        job_script.write('#MSUB -e ${P}/errlog \n')
+        job_script.write('#MSUB -N $(basename ${P}) \n')
         job_script.write('#MSUB -l nodes=1:ppn=2 \n')
-        job_script.write('#MSUB -l mem=1gb \n\n')
+        job_script.write('#MSUB -l mem=4gb \n\n')
 
         # load python module
         job_script.write('module load python/anaconda3.6\n\n')
@@ -147,7 +148,7 @@ class Sweep:
         """ Writes file containing all simulation paths. """
         paths = open(join(self.path, 'scripts', 'paths.txt'), 'w')
         for path in self.simulation_paths.values():
-            paths.write('{:s} \n'.format(path))
+            paths.write('{:s}\n'.format(path))
         paths.close()
 
     def build_sweep_directory(self, directory='./'):
