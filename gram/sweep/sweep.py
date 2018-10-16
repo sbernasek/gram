@@ -82,7 +82,8 @@ class Sweep:
     def build_submission_script(path,
                                 num_trajectories,
                                 saveall,
-                                use_deviations):
+                                use_deviations,
+                                allocation='p30653'):
         """
         Writes job submission script.
 
@@ -95,6 +96,8 @@ class Sweep:
             saveall (bool) - if True, save simulation trajectories
 
             use_deviations (bool) - if True, use deviation variables
+
+            allocation (str) - project allocation, e.g. p30653 (comp. bio)
 
         """
 
@@ -115,7 +118,7 @@ class Sweep:
 
         # =========== begin submission script for individual job =============
         job_script.write('#! /bin/bash\n')
-        job_script.write('#MSUB -A p30653 \n')
+        job_script.write('#MSUB -A {:s} \n'.format(allocation))
         job_script.write('#MSUB -q short \n')
         job_script.write('#MSUB -l walltime=04:00:00 \n')
         job_script.write('#MSUB -m abe \n')
@@ -180,6 +183,7 @@ class Sweep:
               num_trajectories=1000,
               saveall=False,
               use_deviations=False,
+              allocation='p30653',
               **sim_kw):
         """
         Build directory tree for a parameter sweep. Instantiates and saves a simulation instance for each parameter sample, then generates a single shell script to submit each simulation as a separate batch job.
@@ -195,6 +199,8 @@ class Sweep:
             saveall (bool) - if True, save simulation trajectories
 
             use_deviations (bool) - if True, use deviation variables
+
+            allocation (str) - project allocation
 
             sim_kw (dict) - keyword arguments for ConditionSimulation
 
@@ -225,7 +231,8 @@ class Sweep:
         self.build_submission_script(self.path,
                                      num_trajectories,
                                      saveall,
-                                     use_deviations)
+                                     use_deviations,
+                                     allocation=allocation)
 
     @staticmethod
     def build_model(parameters):

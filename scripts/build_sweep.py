@@ -48,6 +48,13 @@ parser.add_argument('-D', '--use_deviations',
                     default=False,
                     required=False)
 
+# project allocation
+parser.add_argument('-A', '--allocation',
+                    help='Project allocation.',
+                    type=str,
+                    default='p30653',
+                    required=False)
+
 args = vars(parser.parse_args())
 
 # ============================= RUN SCRIPT ====================================
@@ -63,9 +70,10 @@ else:
     raise ValueError('{:s} model type not recognized.'.format(args['model']))
 
 # build sweep
-linear_sweep.build(
+sweep_obj.build(
     directory=args['path'],
     num_samples=args['num_samples'],
     num_trajectories=args['num_trajectories'],
     saveall=args['saveall'],
-    use_deviations=args['use_deviations'])
+    use_deviations=args['use_deviations'],
+    allocation=args['allocation'])
