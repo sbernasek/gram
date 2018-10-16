@@ -120,15 +120,15 @@ class Sweep:
         job_script.write('cd {:s} \n\n'.format(sweep_path))
 
         # run script
+        job_script.write('python scripts/run.py ${PATH})
         args = (num_trajectories, saveall, use_deviations)
-        job_script.write('python scripts/run.py \
-                         $\{PATH} -N {:d} -S {:s} -D {:s}\n'.format(*args))
+        job_script.write(' -N {:d} -S {:s} -D {:s}\n'.format(*args))
         job_script.write('EOJ\n')
         job_script.write('`\n\n')
         # ============= end submission script for individual job =============
 
         # print job id
-        job_script.write('echo "JobID = $\{JOB} submitted on `date`"\n')
+        job_script.write('echo "JobID = ${JOB} submitted on `date`"\n')
         job_script.write('done < /scripts/paths.txt \n')
         job_script.write('exit\n')
 

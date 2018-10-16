@@ -1,3 +1,4 @@
+test/
 notebooks/*
 *.pyc
 *.prof
