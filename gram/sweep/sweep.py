@@ -31,7 +31,7 @@ class Sweep:
 
         parameters (np.ndarray[float]) - sampled parameter values
 
-        simulation_kwargs (dict) - keyword arguments for simulation
+        sim_kw (dict) - keyword arguments for simulation
 
     """
 
@@ -211,7 +211,7 @@ class Sweep:
 
         # store parameters
         self.parameters = self.sampler.sample(num_samples)
-        self.simulation_kwargs = kwargs
+        self.sim_kw = sim_kw
         self.simulation_paths = {}
 
         # build simulations
