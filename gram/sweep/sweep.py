@@ -122,7 +122,7 @@ class Sweep:
         # run script
         job_script.write('python scripts/run.py ${PATH}')
         args = (num_trajectories, saveall, use_deviations)
-        job_script.write(' -N {:d} -S {:s} -D {:s}\n'.format(*args))
+        job_script.write(' -N {:d} -S {:d} -D {:d}\n'.format(*args))
         job_script.write('EOJ\n')
         job_script.write('`\n\n')
         # ============= end submission script for individual job =============
