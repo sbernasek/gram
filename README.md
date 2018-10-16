@@ -1,2 +1,2 @@
-# redundant-regulation
-Code used to simulate redundant regulation of target genes under varied biosynthesis conditions.
+# Pulse
+Code used to simulate pulse response sensitivity to regulatory perturbations under varied biosynthesis conditions.
