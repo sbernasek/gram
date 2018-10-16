@@ -187,7 +187,7 @@ class PulseSimulation:
 
         return signal
 
-    def simulate(self, cell, signal, condition='normal', N=100):
+    def simulate(self, cell, signal, condition='normal', N=100, seed=None):
         """
         Run simulation under the specified conditions for a specified cell.
 
@@ -200,6 +200,8 @@ class PulseSimulation:
             condition (str) - simulation conditions affecting rate parameters
 
             N (int) - number of independent simulation trajectories
+
+            seed (int) - seed for random number generator
 
         Returns:
 
@@ -215,14 +217,15 @@ class PulseSimulation:
         ts = sim.run(N=N,
                      signal=signal,
                      duration=self.simulation_duration,
-                     dt=self.dt)
+                     dt=self.dt,
+                     seed=seed)
 
         # apply timescale
         ts.t /= self.timescale
 
         return ts
 
-    def run(self, condition='normal', N=100):
+    def run(self, condition='normal', N=100, seed=None):
         """
         Run simulation under the specified conditions.
 
@@ -231,6 +234,8 @@ class PulseSimulation:
             condition (str) - simulation conditions affecting rate parameters
 
             N (int) - number of independent simulation trajectories
+
+            seed (int) - seed for random number generator
 
         Returns:
 
@@ -241,4 +246,4 @@ class PulseSimulation:
         # instantiate input signal
         signal = self.build_signal(condition)
 
-        return self.simulate(self.cell, signal, condition=condition, N=N)
+        return self.simulate(self.cell, signal, condition=condition, N=N, seed=seed)
