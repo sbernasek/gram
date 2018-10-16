@@ -63,126 +63,43 @@ class Sweep:
             sweep = pickle.load(file)
         return sweep
 
-    def initialize(self, dirpath='./'):
-        """
-        Create directory for sweep.
-
-        Args:
-
-            dirpath (str) - destination path
-
-        """
-
-        # assign name to sweep
-        timestamp = datetime.fromtimestamp(time()).strftime('%y%m%d_%H%M%S')
-        name = '{:s}_{:s}'.format(self.__class__.__name__, timestamp)
-
-        # create directory (overwrite existing one)
-        path = join(dirpath, name)
-        if not isdir(path):
-            mkdir(path)
-
-        # make subdirectories for simulations and scripts
-        self.path = path
-        self.scripts_path = join(path, 'scripts')
-        self.simulations_path = join(path, 'simulations')
-        mkdir(self.scripts_path)
-        mkdir(self.simulations_path)
-
-    def build(self, dirpath='./', N=10, **kwargs):
-        """
-        Build and save simulation instance for each parameter sample.
-
-        Args:
-
-            dirpath (str) - destination path
-
-            N (int) - number of samples
-
-            kwargs: keyword arguments for ConditionSimulation
-
-        """
-
-        # create sweep directory
-        self.initialize(dirpath)
-
-        # store parameters
-        self.parameters = self.sampler.sample(N)
-        self.simulation_kwargs = kwargs
-        self.simulation_paths = {}
-
-        # build simulations
-        for i, parameters in enumerate(self.parameters):
-            simulation_path = join(self.path, 'simulations', '{:d}'.format(i))
-            self.simulation_paths[i] = simulation_path
-            self.build_simulation(parameters, simulation_path, **kwargs)
-
-        # save serialized sweep
-        with open(join(self.path, 'sweep.pkl'), 'wb') as file:
-            pickle.dump(self, file, protocol=-1)
-
-        # build parameter file and submission script
-        self.write_paths_file()
-        self.build_submission_script()
-
     @staticmethod
-    def build_model(parameters):
+    def build_paths_file(path):
         """
-        Returns a model instance defined by the provided parameters.
+        Writes file containing all simulation paths.
 
         Args:
 
-            parameters (np.ndarray[float]) - model parameters
-
-        Returns:
-
-            model (Cell instance)
+            path (str) - sweep path
 
         """
-        pass
-
-    @classmethod
-    def build_simulation(cls, parameters, simulation_path, **kwargs):
-        """
-        Build and save a simulation instance for a specified set of parameters.
-
-        Args:
-
-            parameters (np.ndarray[float]) - parameter values
-
-            simulation_path (str) - simulation path
-
-            kwargs: keyword arguments for ConditionSimulation
-
-        """
-
-        # build model
-        model = cls.build_model(parameters)
-
-        # instantiate simulation
-        simulation = ConditionSimulation(model, **kwargs)
-
-        # create simulation directory
-        if not isdir(simulation_path):
-            mkdir(simulation_path)
-
-        # save simulation
-        simulation.save(simulation_path)
-
-    def write_paths_file(self):
-        """ Writes file containing all simulation paths. """
-        paths = open(join(self.scripts_path, 'paths.txt'), 'w')
+        paths = open(join(path, 'scripts', 'paths.txt'), 'w')
         for path in sweep.simulation_paths.values():
             paths.write('{:s} \n'.format(path))
         paths.close()
 
-    def build_submission_script(self):
+    @staticmethod
+    def build_submission_script(path,
+                                num_trajectories,
+                                saveall,
+                                use_deviations):
         """
-        Write submission script for submitting multiple parallel simulations.
+        Writes job submission script.
+
+        Args:
+
+            path (str) - sweep path
+
+            num_trajectories (int) - number of simulation trajectories
+
+            saveall (bool) - if True, save simulation trajectories
+
+            use_deviations (bool) - if True, use deviation variables
+
         """
 
         # define paths
-        sweep_path = abspath(self.path)
+        sweep_path = abspath(path)
         job_path = join(sweep_path, 'scripts', 'job_submission.sh')
 
         # copy run script to scripts directory
@@ -215,7 +132,9 @@ class Sweep:
         job_script.write('cd {:s} \n\n'.format(sweep_path))
 
         # run script
-        job_script.write('python scripts/run.py $\{PATH}\n')
+        args = (num_trajectories, saveall, use_deviations)
+        job_script.write('python scripts/run.py \
+                         $\{PATH} -N {:d} -S {:s} -D {:s}\n'.format(*args))
         job_script.write('EOJ\n')
         job_script.write('`\n\n')
         # ============= end submission script for individual job =============
@@ -230,6 +149,127 @@ class Sweep:
 
         # change the permissions
         chmod(job_path, 0o755)
+
+    def build_sweep_directory(self, directory='./'):
+        """
+        Create directory for sweep.
+
+        Args:
+
+            directory (str) - destination path
+
+        """
+
+        # assign name to sweep
+        timestamp = datetime.fromtimestamp(time()).strftime('%y%m%d_%H%M%S')
+        name = '{:s}_{:s}'.format(self.__class__.__name__, timestamp)
+
+        # create directory (overwrite existing one)
+        path = join(directory, name)
+        if not isdir(path):
+            mkdir(path)
+        self.path = path
+
+        # make subdirectories for simulations and scripts
+        mkdir(join(path, 'scripts'))
+        mkdir(join(path, 'simulations'))
+
+    def build(self,
+              directory='./',
+              num_samples=10,
+              num_trajectories=1000,
+              saveall=False,
+              use_deviations=False,
+              **sim_kw):
+        """
+        Build directory tree for a parameter sweep. Instantiates and saves a simulation instance for each parameter sample, then generates a single shell script to submit each simulation as a separate batch job.
+
+        Args:
+
+            directory (str) - destination path
+
+            num_samples (int) - number of samples in parameter space
+
+            num_trajectories (int) - number of simulation trajectories
+
+            saveall (bool) - if True, save simulation trajectories
+
+            use_deviations (bool) - if True, use deviation variables
+
+            sim_kw (dict) - keyword arguments for ConditionSimulation
+
+        """
+
+        # create sweep directory
+        self.build_sweep_directory(directory)
+
+        # store parameters
+        self.parameters = self.sampler.sample(num_samples)
+        self.simulation_kwargs = kwargs
+        self.simulation_paths = {}
+
+        # build simulations
+        for i, parameters in enumerate(self.parameters):
+            simulation_path = join(self.path, 'simulations', '{:d}'.format(i))
+            self.simulation_paths[i] = simulation_path
+            self.build_simulation(parameters, simulation_path, **sim_kw)
+
+        # save serialized sweep
+        with open(join(self.path, 'sweep.pkl'), 'wb') as file:
+            pickle.dump(self, file, protocol=-1)
+
+        # build parameter file
+        self.build_paths_file(self.path)
+
+        # build job submission script
+        self.build_submission_script(self.path,
+                                     num_trajectories,
+                                     saveall,
+                                     use_deviations)
+
+    @staticmethod
+    def build_model(parameters):
+        """
+        Returns a model instance defined by the provided parameters.
+
+        Args:
+
+            parameters (np.ndarray[float]) - model parameters
+
+        Returns:
+
+            model (Cell instance)
+
+        """
+        pass
+
+    @classmethod
+    def build_simulation(cls, parameters, simulation_path, **kwargs):
+        """
+        Builds and saves a simulation instance for a set of parameters.
+
+        Args:
+
+            parameters (np.ndarray[float]) - parameter values
+
+            simulation_path (str) - simulation path
+
+            kwargs: keyword arguments for ConditionSimulation
+
+        """
+
+        # build model
+        model = cls.build_model(parameters)
+
+        # instantiate simulation
+        simulation = ConditionSimulation(model, **kwargs)
+
+        # create simulation directory
+        if not isdir(simulation_path):
+            mkdir(simulation_path)
+
+        # save simulation
+        simulation.save(simulation_path)
 
 
 class LinearSweep(Sweep):
