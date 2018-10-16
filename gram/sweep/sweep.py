@@ -97,6 +97,11 @@ class Sweep:
         # declare outer script that reads PATH from file
         job_script = open(job_path, 'w')
         job_script.write('#!/bin/bash\n')
+
+        # move to sweep directory
+        job_script.write('cd {:s} \n\n'.format(sweep_path))
+
+        # begin script for overall job
         job_script.write('while IFS=$\'\\t\' read PATH\n')
         job_script.write('do\n')
         job_script.write('   JOB=`msub - << EOJ\n\n')
@@ -116,9 +121,6 @@ class Sweep:
         # load python module
         job_script.write('module load python/anaconda3.6\n\n')
 
-        # set working directory and run script
-        job_script.write('cd {:s} \n\n'.format(sweep_path))
-
         # run script
         job_script.write('python scripts/run.py ${PATH}')
         args = (num_trajectories, saveall, use_deviations)
@@ -129,7 +131,7 @@ class Sweep:
 
         # print job id
         job_script.write('echo "JobID = ${JOB} submitted on `date`"\n')
-        job_script.write('done < /scripts/paths.txt \n')
+        job_script.write('done < ./scripts/paths.txt \n')
         job_script.write('exit\n')
 
         # close the file
