@@ -116,8 +116,8 @@ class Sweep:
         job_script.write('#MSUB -o ${P}/outlog \n')
         job_script.write('#MSUB -e ${P}/errlog \n')
         job_script.write('#MSUB -N $(basename ${P}) \n')
-        job_script.write('#MSUB -l nodes=1:ppn=2 \n')
-        job_script.write('#MSUB -l mem=4gb \n\n')
+        job_script.write('#MSUB -l nodes=1:ppn=1 \n')
+        job_script.write('#MSUB -l mem=8gb \n\n')
 
         # load python module
         job_script.write('module load python/anaconda3.6\n\n')
