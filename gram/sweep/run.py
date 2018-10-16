@@ -10,8 +10,7 @@ parser = ArgumentParser(description='Run a perturbation simulation.')
 
 # simulation directory
 parser.add_argument('path',
-                    nargs='?',
-                    required=True)
+                    nargs=1)
 
 # save simulation trajectories
 parser.add_argument('-S', '--saveall',
@@ -39,7 +38,7 @@ args = vars(parser.parse_args())
 # ============================= RUN SCRIPT ====================================
 
 # load simulation
-simulation = ConditionSimulation.load(args['path'])
+simulation = ConditionSimulation.load(args['path'][0])
 
 # run simulation and comparison
 simulation.simulate(N=args['trajectories'])
