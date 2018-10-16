@@ -64,21 +64,6 @@ class Sweep:
         return sweep
 
     @staticmethod
-    def build_paths_file(path):
-        """
-        Writes file containing all simulation paths.
-
-        Args:
-
-            path (str) - sweep path
-
-        """
-        paths = open(join(path, 'scripts', 'paths.txt'), 'w')
-        for path in sweep.simulation_paths.values():
-            paths.write('{:s} \n'.format(path))
-        paths.close()
-
-    @staticmethod
     def build_submission_script(path,
                                 num_trajectories,
                                 saveall,
@@ -153,6 +138,13 @@ class Sweep:
         # change the permissions
         chmod(job_path, 0o755)
 
+    def build_paths_file(self):
+        """ Writes file containing all simulation paths. """
+        paths = open(join(self.path, 'scripts', 'paths.txt'), 'w')
+        for path in self.simulation_paths.values():
+            paths.write('{:s} \n'.format(path))
+        paths.close()
+
     def build_sweep_directory(self, directory='./'):
         """
         Create directory for sweep.
@@ -225,7 +217,7 @@ class Sweep:
             pickle.dump(self, file, protocol=-1)
 
         # build parameter file
-        self.build_paths_file(self.path)
+        self.build_paths_file()
 
         # build job submission script
         self.build_submission_script(self.path,
