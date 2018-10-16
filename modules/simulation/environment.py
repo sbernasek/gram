@@ -3,16 +3,23 @@ from os import mkdir
 from collections import OrderedDict
 import matplotlib.pyplot as plt
 
+from genessa.timeseries.base import TimeSeries
 from .perturbation import PerturbationSimulation
 
 
-class EnvironmentSimulation(PerturbationSimulation):
+class ConditionSimulation(PerturbationSimulation):
     """
     Numerical simulations of a single gene expression pulse before and after a genetic perturbations under a range of environmental conditions.
 
     Attributes:
 
-        comparisons (dict) - {condition: AreaComparison} pairs
+        conditions (array like) - simulation conditions
+
+        dynamics (dict) - {condition: (before, after)} pairs in which before and after are simulation trajectories stored as TimeSeries objects
+
+        comparisons (dict) - {condition: Comparison} pairs
+
+        saveall (bool) - if True, dynamics were saved
 
     Inherited Attributes:
 
@@ -38,15 +45,13 @@ class EnvironmentSimulation(PerturbationSimulation):
 
     """
 
-    def __init__(self, cell, conditions=None, **kwargs):
+    def __init__(self, cell, **kwargs):
         """
         Instantiate environmental comparison simulation.
 
         Args:
 
             cell (Cell derivative)
-
-            conditions (array like) - conditions to be compared
 
         Keyword Arguments:
 
@@ -70,19 +75,19 @@ class EnvironmentSimulation(PerturbationSimulation):
 
         super().__init__(cell, **kwargs)
 
-        # initialize comparisons
-        if conditions is None:
-            conditions = ('normal', 'diabetic', 'minute')
-        self.comparisons = OrderedDict([(c, None) for c in conditions])
+        # initialize conditions, dynamics, and comparisons dictionaries
+        self.conditions = []
+        self.dynamics = None
+        self.comparisons = None
 
+        # set condition names
         self.condition_names = dict(normal='Normal',
                                   diabetic='Reduced Metabolism',
                                   minute='Reduced Translation')
 
-    @property
-    def conditions(self):
-        """ Environmental conditions. """
-        return tuple(self.comparisons.keys())
+    def __getstate__(self):
+        """ Returns all attributes except simulation trajectories. """
+        return {k: v for k, v in self.__dict__.items() if k != 'dynamics'}
 
     @property
     def N(self):
@@ -100,7 +105,7 @@ class EnvironmentSimulation(PerturbationSimulation):
 
         Returns:
 
-            simulation (EnvironmentSimulation)
+            simulation (ConditionSimulation)
 
         """
 
@@ -108,7 +113,24 @@ class EnvironmentSimulation(PerturbationSimulation):
         simulation = super(cls, cls).load(join(path, 'simulation.pkl'))
 
         # load simulation trajectories (if available)
-        for condition, comparison in simulation.comparisons.items():
+        if simulation.saveall:
+            cls.load_trajectories(path, simulation)
+
+        return simulation
+
+    @staticmethod
+    def load_trajectories(path, simulation):
+        """
+        Load simulation trajectories from file.
+
+        Args:
+
+            simulation (ConditionSimulation) - file path
+
+        """
+        # load simulation trajectories (if available)
+        simulation.dynamics = OrderedDict()
+        for condition in simulation.conditions:
 
             # check that directory exists
             subdir = join(path, condition)
@@ -118,14 +140,37 @@ class EnvironmentSimulation(PerturbationSimulation):
              # load simulation trajectories for control
             control_dir = join(subdir, 'control')
             if isdir(control_dir):
-                comparison.reference = comparison.tstype.load(control_dir)
+                before = TimeSeries.load(control_dir)
 
             # load simulation trajectories for perturbation
             perturbation_dir = join(subdir, 'perturbation')
             if isdir(perturbation_dir):
-                comparison.compared = comparison.tstype.load(perturbation_dir)
+                after = TimeSeries.load(perturbation_dir)
 
-        return simulation
+            # store simulation trajectories for current condition
+            simulation.dynamics[condition] = (before, after)
+
+        # set simulation trajectories for comparison objects (if available)
+        for condition, comparison in simulation.comparisons.items():
+
+            # get simulation trajectories for comparison condition
+            before = simulation.dynamics[condition][0]
+            after = simulation.dynamics[condition][1]
+
+            # transform to deviations
+            if comparison.deviations:
+                before = before.get_deviations()
+                after = after.get_deviations()
+
+            # if comparison uses a different type, cast the timeseries
+            if comparison.tstype != TimeSeries:
+                tskwargs = comparison.tskwargs
+                before = comparison.tstype.from_timeseries(before, **tskwargs)
+                after = comparison.tstype.from_timeseries(after, **tskwargs)
+
+            # set trajectories for comparison
+            comparison.reference = before
+            comparison.compared = after
 
     def save(self, path, saveall=False):
         """
@@ -140,7 +185,7 @@ class EnvironmentSimulation(PerturbationSimulation):
         """
 
         if saveall:
-            for condition, comparison in self.comparisons.items():
+            for condition, (before, after) in self.dynamics.items():
 
                 # make a directory
                 subdir = join(path, condition)
@@ -148,25 +193,83 @@ class EnvironmentSimulation(PerturbationSimulation):
                     mkdir(subdir)
 
                 # save simulation trajectories
-                comparison.reference.save(join(subdir, 'control'))
-                comparison.compared.save(join(subdir, 'perturbation'))
+                before.save(join(subdir, 'control'))
+                after.save(join(subdir, 'perturbation'))
 
         # save serialized object
+        self.saveall = saveall
         super().save(join(path, 'simulation.pkl'))
 
-    def run(self, N=100, **kwargs):
+    def simulate(self, N=100, conditions=None, inplace=True):
         """
-        Run simulation and evaluate comparison between wildtype and mutant for each environmental condition.
+        Run perturbation simulation for each environmental condition.
 
         Args:
 
             N (int) - number of independent simulation trajectories
 
-            kwargs: keyword arguments for comparison
+            conditions (array like) - simulation conditions
+
+            inplace (bool) - if True, store simulation trajectories
+
+        Returns:
+
+            dynamics (dict) - {condition: (before, after)} pairs in which before and after are simulation trajectories stored as TimeSeries objects
 
         """
-        for condition in self.comparisons.keys():
-            self.comparisons[condition] = super().run(condition, N=N, **kwargs)
+
+        # set simulation conditions
+        if conditions is None:
+            conditions = ('normal', 'diabetic', 'minute')
+        self.conditions = conditions
+
+        # run simulations
+        dynamics = OrderedDict()
+        for condition in conditions:
+            before, after = super().simulate(condition, N)
+            dynamics[condition] = (before, after)
+
+        # set/return dynamics
+        if inplace:
+            self.dynamics = dynamics
+        else:
+            return dynamics
+
+    def compare(self, mode=None, deviations=False, inplace=True, **kwargs):
+        """
+        Run perturbation simulation for each environmental condition.
+
+        Args:
+
+            mode (str) - comparison type, options are:
+                empirical: fraction of trajectories below/above reference
+                area: fraction of confidence band area below/above reference
+                cdf: fraction of gaussian model below/above reference
+                threshold: fraction of gaussian model above threshold
+
+            deviations (bool) - if True, compare deviations from initial value
+
+            inplace (bool) - if True, store simulation trajectories
+
+            kwargs: keyword arguments for comparison
+
+        Returns:
+
+            comparisons (dict) - {condition: Comparison} pairs
+
+        """
+
+        # run comparisons
+        comparisons = OrderedDict()
+        for condition, dynamics in self.dynamics.items():
+            comparison = super().compare(*dynamics, mode, deviations, **kwargs)
+            comparisons[condition] = comparison
+
+        # set/return dynamics
+        if inplace:
+            self.comparisons = comparisons
+        else:
+            return comparisons
 
     def plot_comparison(self, trajectories=False, axes=None):
         """

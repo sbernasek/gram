@@ -29,3 +29,22 @@ class Mutation:
         cell = deepcopy(self)
         self.remove_perturbed_reactions(cell)
         return cell
+
+    def add_feedback(self, eta0, eta1, eta2, perturbed=False):
+        """
+        Add feedback at the gene, transcript, and protein levels.
+
+        Args:
+
+            eta0 (float) - transcriptional feedback strength
+
+            eta1 (float) - post-transcriptional feedback strength
+
+            eta2 (float) - post-translational feedback strength
+
+            perturbed (bool) - if True, feedback is sensitive to perturbation
+
+        """
+        self.add_transcriptional_feedback(k=eta0, perturbed=perturbed)
+        self.add_post_transcriptional_feedback(k=eta1, perturbed=perturbed)
+        self.add_post_translational_feedback(k=eta2, perturbed=perturbed)

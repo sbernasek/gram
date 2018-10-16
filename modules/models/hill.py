@@ -143,65 +143,24 @@ class HillModel(HillCell, Mutation):
              ribosome_sensitive=ribosome_sensitive,
              **kwargs)
 
-    # def add_post_transcriptional_feedback(self,
-    #                                  k=1,
-    #                                  Kd=1,
-    #                                  atp_sensitive=2,
-    #                                  ribosome_sensitive=True,
-    #                                  **kwargs):
-    #     """
-    #     Adds negative feedback applied to transcript level. Kinetics are based on a michaelis menten mechanism.
+    def add_feedback(self, k_m, n, eta1, eta2, perturbed=False):
+        """
+        Add feedback at the gene, transcript, and protein levels.
 
-    #     Args:
+        Args:
 
-    #         k (float) - maximum degradation rate (feedback strength)
+            k_m (float) - repressor michaelis constant
 
-    #         Kd (float) - michaelis constant
+            n (float) - repressor hill coefficient
 
-    #         atp_sensitive (int) - order of metabolism dependence
+            eta1 (float) - post-transcriptional feedback strength
 
-    #         ribosome_sensitive (bool) - scale rate parameter with ribosomes
+            eta2 (float) - post-translational feedback strength
 
-    #         kwargs: keyword arguments for transcript degradation reaction
+            perturbed (bool) - if True, feedback is sensitive to perturbation
 
-    #     """
-    #     self.add_transcript_degradation(
-    #         actuator=self.name,
-    #         target=self.name,
-    #         k=k,
-    #         Kd=Kd,
-    #         atp_sensitive=atp_sensitive,
-    #         ribosome_sensitive=ribosome_sensitive,
-    #         **kwargs)
+        """
+        self.add_transcriptional_feedback(k_m=k_m, n=n, perturbed=perturbed)
+        self.add_post_transcriptional_feedback(k=eta1, perturbed=perturbed)
+        self.add_post_translational_feedback(k=eta2, perturbed=perturbed)
 
-    # def add_post_translational_feedback(self,
-    #                                  k=1,
-    #                                  Kd=1,
-    #                                  atp_sensitive=2,
-    #                                  ribosome_sensitive=True,
-    #                                  **kwargs):
-    #     """
-    #     Adds negative feedback applied to protein level. Kinetics are based on a michaelis menten mechanism.
-
-    #     Args:
-
-    #         k (float) - maximum degradation rate (feedback strength)
-
-    #         Kd (float) - michaelis constant
-
-    #         atp_sensitive (int) - order of metabolism dependence
-
-    #         ribosome_sensitive (bool) - scale rate parameter with ribosomes
-
-    #         kwargs: keyword arguments for protein degradation reaction
-
-    #     """
-
-    #     self.add_protein_degradation(
-    #         actuator=self.name,
-    #         target=self.name,
-    #         k=k,
-    #         Kd=Kd,
-    #         atp_sensitive=atp_sensitive,
-    #         ribosome_sensitive=ribosome_sensitive,
-    #         **kwargs)

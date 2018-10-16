@@ -80,9 +80,9 @@ class PerturbationSimulation(PulseSimulation):
 
         Returns:
 
-            ts_wildtype (genessa TimeSeries) - timeseries before perturbation
+            before (genessa TimeSeries) - trajectories before perturbation
 
-            ts_mutant (genessa TimeSeries) - timeseries after perturbation
+            after (genessa TimeSeries) - trajectories after perturbation
 
         """
 
@@ -90,22 +90,29 @@ class PerturbationSimulation(PulseSimulation):
         signal = self.build_signal(condition)
 
         # run simulations
-        ts_wildtype = super().simulate(self.cell, signal, condition, N=N)
-        ts_mutant = super().simulate(self.mutant, signal, condition, N=N)
+        before = super().simulate(self.cell, signal, condition, N=N)
+        after = super().simulate(self.mutant, signal, condition, N=N)
 
-        return ts_wildtype, ts_mutant
+        return before, after
 
-    def run(self, condition='normal', N=100, comparison_type=None, **kwargs):
+    @staticmethod
+    def compare(reference, compared, mode=None, deviations=False, **kwargs):
         """
-        Run simulation under the specified conditions and compare dynamics between wildtype and mutant.
+        Compare simulation trajectories between two conditions.
 
         Args:
 
-            condition (str) - simulation conditions affecting rate parameters
+            reference (genessa TimeSeries) - reference trajectories
 
-            N (int) - number of independent simulation trajectories
+            compared (genessa TimeSeries) - compared trajectories
 
-            comparison_type (str) - comparison type e.g. 'empirical', 'area', 'cdf' or 'threshold'. Defaults to 'empirical'.
+            mode (str) - comparison type, options are:
+                empirical: fraction of trajectories below/above reference
+                area: fraction of confidence band area below/above reference
+                cdf: fraction of gaussian model below/above reference
+                threshold: fraction of gaussian model above threshold
+
+            deviations (bool) - if True, compare deviations from initial value
 
             kwargs: keyword arguments for comparison
 
@@ -115,17 +122,13 @@ class PerturbationSimulation(PulseSimulation):
 
         """
 
-        # run simulation
-        ts0, ts1 = self.simulate(condition, N)
-
-        # evaluate comparison
-        if comparison_type == 'empirical' or comparison_type is None:
-            comparison = Comparison(ts0, ts1, **kwargs)
-        elif comparison_type == 'area':
-            comparison = AreaComparison(ts0, ts1, **kwargs)
-        elif comparison_type == 'cdf':
-            comparison = CDFComparison(ts0, ts1, **kwargs)
-        elif comparison_type == 'threshold':
-            comparison = ThresholdComparison(ts0, ts1, **kwargs)
+        if mode == 'empirical' or mode is None:
+            comparison = Comparison(reference, compared, deviations, **kwargs)
+        elif mode == 'area':
+            comparison = AreaComparison(reference, compared, deviations, **kwargs)
+        elif mode == 'cdf':
+            comparison = CDFComparison(reference, compared, deviations, **kwargs)
+        elif mode == 'threshold':
+            comparison = ThresholdComparison(reference, compared, deviations, **kwargs)
 
         return comparison

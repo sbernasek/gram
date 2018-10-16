@@ -21,6 +21,8 @@ class Comparison:
 
         compared (TimeSeries) - timeseries to be compared
 
+        deviations (bool) - if True, compare deviations from initial value
+
         dim (int) - state space dimension to be compared
 
         below (float) - fraction of confidence band below the reference
@@ -29,7 +31,7 @@ class Comparison:
 
         error (float) - total non-overalpping fraction of confidence band
 
-        tstype (type) - reference/compared type
+        tstype (type) - python class for timeseries objects
 
     Properties:
 
@@ -45,7 +47,7 @@ class Comparison:
 
     """
 
-    def __init__(self, reference, compared, dim=-1):
+    def __init__(self, reference, compared, deviations=False, dim=-1):
         """
         Instantiate timeseries comparison object.
 
@@ -55,15 +57,23 @@ class Comparison:
 
             compared (TimeSeries) - timeseries to be compared
 
+            deviations (bool) - if True, compare deviations from initial value
+
             dim (int) - state space dimension to be compared
 
         """
 
-        # store attributes
-        self.dim = dim
+        # store simulation trajectories
+        if deviations:
+            reference = reference.get_deviations()
+            compared = compared.get_deviations()
         self.reference = reference
         self.compared = compared
+
+        # store attributes
+        self.dim = dim
         self.tstype = self.reference.__class__
+        self.deviations = deviations
 
         # evaluate comparison metric
         below, above = self.evaluate()
@@ -135,13 +145,6 @@ class Comparison:
             above (float) - mean fraction of trajectories above the reference
 
         """
-
-        # # extract bounds for confidence bands
-        # lower, upper = self.extract_bounds(self.reference)
-
-        # # evaluate fraction of trajectories below and above reference
-        # fractions_below = self.evaluate_fraction_below(lower)
-        # fractions_above = self.evaluate_fraction_above(upper)
 
         # determine start index (pulse onset)
         ind = self.reference.mean[self.dim].nonzero()[0][0] + 1
@@ -356,6 +359,8 @@ class AreaComparison(Comparison):
 
         compared (TimeSeries) - timeseries to be compared
 
+        deviations (bool) - if True, compare deviations from initial value
+
         dim (int) - state space dimension to be compared
 
         below (float) - fraction of confidence band below the reference
@@ -364,9 +369,11 @@ class AreaComparison(Comparison):
 
         error (float) - total non-overalpping fraction of confidence band
 
+        tstype (type) - python class for timeseries objects
+
     """
 
-    def __init__(self, reference, compared, dim=-1):
+    def __init__(self, reference, compared, deviations=False, dim=-1):
         """
         Instantiate timeseries comparison object.
 
@@ -376,12 +383,14 @@ class AreaComparison(Comparison):
 
             compared (TimeSeries) - timeseries to be compared
 
+            deviations (bool) - if True, compare deviations from initial value
+
             dim (int) - state space dimension to be compared
 
         """
 
         # call parent instantiation (runs evaluation)
-        super().__init__(reference, compared, dim=dim)
+        super().__init__(reference, compared, deviations=deviations, dim=dim)
 
     def evaluate(self):
         """
@@ -427,7 +436,11 @@ class CDFComparison(Comparison):
 
         compared (GaussianModel) - timeseries to be compared
 
+        tskwargs (dict) - keyword arguments for timeseries instantiation
+
     Inherited Attributes:
+
+        deviations (bool) - if True, compare deviations from initial value
 
         dim (int) - state space dimension to be compared
 
@@ -436,6 +449,8 @@ class CDFComparison(Comparison):
         above (float) - fraction of confidence band above the reference
 
         error (float) - total non-overalpping fraction of confidence band
+
+        tstype (type) - python class for timeseries objects
 
     Properties:
 
@@ -451,7 +466,12 @@ class CDFComparison(Comparison):
 
     """
 
-    def __init__(self, reference, compared, bandwidth=.98, dim=-1):
+    def __init__(self,
+                 reference,
+                 compared,
+                 deviations=False,
+                 bandwidth=.98,
+                 dim=-1):
         """
         Instantiate timeseries comparison object.
 
@@ -460,6 +480,8 @@ class CDFComparison(Comparison):
             reference (TimeSeries) - reference timeseries
 
             compared (TimeSeries) - timeseries to be compared
+
+            deviations (bool) - if True, compare deviations from initial value
 
             bandwidth (float) - width of confidence band, 0 to 1
 
@@ -472,7 +494,10 @@ class CDFComparison(Comparison):
         compared = GaussianModel.from_timeseries(compared, bandwidth)
 
         # call parent instantiation (runs evaluation)
-        super().__init__(reference, compared, dim=dim)
+        super().__init__(reference, compared, deviations=deviations, dim=dim)
+
+        # store timeseries kwargs
+        self.tskwargs = dict(bandwidth=bandwidth)
 
     @property
     def fractions_below(self):
@@ -489,14 +514,19 @@ class ThresholdComparison(CDFComparison):
     """
     Class for comparing a timeseries against a reference. Comparison is based on evaluating the fraction of the compared timeseries that lies above a threshold defined relative to the reference timeseries.
 
-
     Inherited Attributes:
 
         reference (GaussianModel) - reference timeseries
 
         compared (GaussianModel) - timeseries to be compared
 
+        deviations (bool) - if True, compare deviations from initial value
+
         dim (int) - state space dimension to be compared
+
+        tstype (type) - python class for timeseries objects
+
+        tskwargs (dict) - keyword arguments for timeseries instantiation
 
     Properties:
 
@@ -517,6 +547,7 @@ class ThresholdComparison(CDFComparison):
     def __init__(self,
         reference,
         compared,
+        deviations=False,
         fraction_of_max=0.3,
         bandwidth=.98,
         dim=-1):
@@ -528,6 +559,8 @@ class ThresholdComparison(CDFComparison):
             reference (TimeSeries) - reference timeseries
 
             compared (TimeSeries) - timeseries to be compared
+
+            deviations (bool) - if True, compare deviations from initial value
 
             fraction_of_max (float) - fraction of peak mean reference value used as threshold
 
@@ -541,9 +574,19 @@ class ThresholdComparison(CDFComparison):
         self.dim = dim
         self.fraction_of_max = fraction_of_max
 
+        # transform to deviations
+        if deviations:
+            reference = reference.get_deviations()
+            compared = compared.get_deviations()
+
         # fit gaussian models to timeseries
         self.reference = GaussianModel.from_timeseries(reference, bandwidth)
         self.compared = GaussianModel.from_timeseries(compared, bandwidth)
+
+        # store timeseries type
+        self.deviations = deviations
+        self.tstype = self.reference.__class__
+        self.tskwargs = dict(bandwidth=bandwidth)
 
     @property
     def threshold(self):
@@ -551,16 +594,21 @@ class ThresholdComparison(CDFComparison):
         return self.reference.peaks[self.dim] * self.fraction_of_max
 
     @property
-    def commitment_time(self):
+    def comparison_index(self):
         """ Index of time at which reference reaches threshold. """
         indices = self.reference.index(self.threshold, self.dim, mode='upper')
         assert indices.size > 0, 'Did not reach specified threshold.'
-        return indices
+        return indices[-1]
+
+    @property
+    def comparison_time(self):
+        """ Time at which reference reaches threshold. """
+        return self.t[self.comparison_index]
 
     @property
     def error(self):
         """ Fraction of trajectories exceeding threshold at index. """
-        return self.fractions_above[self.commitment_time[-1]]
+        return self.fractions_above[self.comparison_index]
 
     def plot_outlying_trajectories(self, alpha=0.5, ax=None):
         """
@@ -583,7 +631,7 @@ class ThresholdComparison(CDFComparison):
         cbounds = (self.compared.lower[self.dim],self.compared.upper[self.dim])
 
         # get indices of timepoints before threshold
-        ind = np.arange(self.t.size) < self.commitment_time[-1]
+        ind = np.arange(self.t.size) < self.comparison_index
         t = self.t[ind]
         kw = dict(color='k', alpha=0.2)
 
@@ -643,10 +691,10 @@ class ThresholdComparison(CDFComparison):
         """
         # plot threshold geometry
         peak_time = self.t[self.reference.peak_indices[self.dim]]
-        threshold_time = self.t[self.commitment_time[-1]]
+        threshold_time = self.comparison_time
         peak_value = self.reference.peaks[self.dim]
 
-        max_error = self.compared.upper[self.dim][self.commitment_time[-1]]
+        max_error = self.compared.upper[self.dim][self.comparison_index]
 
 
         # add vertical arrow defining threshold value

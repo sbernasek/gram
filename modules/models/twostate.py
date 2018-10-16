@@ -46,7 +46,7 @@ class TwoStateModel(TwoStateCell, Mutation):
 
             name (str) - name of controlled gene
 
-            k0 (float) - gene activation rate constant
+            k0 (float) - gene activation rate constant (by input)
 
             k1 (float) - transcription rate constant
 
