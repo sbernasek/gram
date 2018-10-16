@@ -102,7 +102,7 @@ class Sweep:
         job_script.write('cd {:s} \n\n'.format(sweep_path))
 
         # begin script for overall job
-        job_script.write('while IFS=$\'\\t\' read PATH\n')
+        job_script.write('while IFS=$\'\\t\' read P\n')
         job_script.write('do\n')
         job_script.write('   JOB=`msub - << EOJ\n\n')
 
@@ -112,8 +112,9 @@ class Sweep:
         job_script.write('#MSUB -q short \n')
         job_script.write('#MSUB -l walltime=04:00:00 \n')
         job_script.write('#MSUB -m abe \n')
-        job_script.write('#MSUB -M sebastian@u.northwestern.edu \n')
-        job_script.write('#MSUB -j oe \n')
+        #job_script.write('#MSUB -M sebastian@u.northwestern.edu \n')
+        job_script.write('#MSUB -o ${P}/stdout.txt\n')
+        job_script.write('#MSUB -r ${P}/stderr.txt\n')
         #job_script.write('#MSUB -N %s \n' % job_id)
         job_script.write('#MSUB -l nodes=1:ppn=2 \n')
         job_script.write('#MSUB -l mem=1gb \n\n')
@@ -122,7 +123,7 @@ class Sweep:
         job_script.write('module load python/anaconda3.6\n\n')
 
         # run script
-        job_script.write('python scripts/run.py ${PATH}')
+        job_script.write('python ./scripts/run.py ${P}')
         args = (num_trajectories, saveall, use_deviations)
         job_script.write(' -N {:d} -S {:d} -D {:d}\n'.format(*args))
         job_script.write('EOJ\n')
