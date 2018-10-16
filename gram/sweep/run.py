@@ -34,15 +34,16 @@ parser.add_argument('-D', '--use_deviations',
                     required=False)
 
 args = vars(parser.parse_args())
+simulation_path = args['path'][0]
 
 # ============================= RUN SCRIPT ====================================
 
 # load simulation
-simulation = ConditionSimulation.load(args['path'][0])
+simulation = ConditionSimulation.load(simulation_path)
 
 # run simulation and comparison
 simulation.simulate(N=args['trajectories'])
 simulation.compare(deviations=bool(args['use_deviations']), inplace=True)
 
 # save simulation
-simulation.save(path, saveall=bool(args['saveall']))
+simulation.save(simulation_path, saveall=bool(args['saveall']))

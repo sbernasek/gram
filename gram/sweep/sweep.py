@@ -113,8 +113,7 @@ class Sweep:
         job_script.write('#MSUB -l walltime=04:00:00 \n')
         job_script.write('#MSUB -m abe \n')
         #job_script.write('#MSUB -M sebastian@u.northwestern.edu \n')
-        job_script.write('#MSUB -o ${P}\n')
-        job_script.write('#MSUB -e ${P}\n')
+        job_script.write('#MSUB -oe\n')
         #job_script.write('#MSUB -N %s \n' % job_id)
         job_script.write('#MSUB -l nodes=1:ppn=2 \n')
         job_script.write('#MSUB -l mem=1gb \n\n')
@@ -275,12 +274,6 @@ class Sweep:
 
         # save simulation
         simulation.save(simulation_path)
-
-        # create output and error files
-        stdout = open(join(simulation_path, 'stdout.txt'), 'w')
-        stdout.close()
-        stderr = open(join(simulation_path, 'stderr.txt'), 'w')
-        stderr.close()
 
 
 class LinearSweep(Sweep):
