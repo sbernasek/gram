@@ -99,7 +99,7 @@ class Sweep:
         job_script.write('#!/bin/bash\n')
         job_script.write('while IFS=$\'\\t\' read PATH\n')
         job_script.write('do\n')
-        job_script.write('\tJOB=`msub - << EOJ\n\n')
+        job_script.write('   JOB=`msub - << EOJ\n\n')
 
         # =========== begin submission script for individual job =============
         job_script.write('#! /bin/bash\n')
@@ -120,7 +120,7 @@ class Sweep:
         job_script.write('cd {:s} \n\n'.format(sweep_path))
 
         # run script
-        job_script.write('python scripts/run.py ${PATH})
+        job_script.write('python scripts/run.py ${PATH}')
         args = (num_trajectories, saveall, use_deviations)
         job_script.write(' -N {:d} -S {:s} -D {:s}\n'.format(*args))
         job_script.write('EOJ\n')
