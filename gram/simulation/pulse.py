@@ -213,12 +213,11 @@ class PulseSimulation:
         ic = self.evaluate_steady_state(cell, condition=condition)
 
         # instantiate and run stochastic simulation
-        sim = MonteCarloSimulation(cell, condition, ic=ic)
+        sim = MonteCarloSimulation(cell, condition, ic=ic, seed=seed)
         ts = sim.run(N=N,
                      signal=signal,
                      duration=self.simulation_duration,
-                     dt=self.dt,
-                     seed=seed)
+                     dt=self.dt)
 
         # apply timescale
         ts.t /= self.timescale

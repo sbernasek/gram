@@ -68,7 +68,7 @@ class PerturbationSimulation(PulseSimulation):
         # apply perturbation to generate mutant
         self.mutant = self.cell.perturb()
 
-    def simulate(self, condition='normal', N=100):
+    def simulate(self, condition='normal', N=100, seed=None):
         """
         Run simulation under the specified conditions.
 
@@ -77,6 +77,8 @@ class PerturbationSimulation(PulseSimulation):
             condition (str) - simulation conditions affecting rate parameters
 
             N (int) - number of independent simulation trajectories
+
+            seed (int) - seed for random number generator
 
         Returns:
 
@@ -90,8 +92,8 @@ class PerturbationSimulation(PulseSimulation):
         signal = self.build_signal(condition)
 
         # run simulations
-        before = super().simulate(self.cell, signal, condition, N=N)
-        after = super().simulate(self.mutant, signal, condition, N=N)
+        before = super().simulate(self.cell, signal, condition, N=N, seed=seed)
+        after = super().simulate(self.mutant, signal, condition, N=N, seed=seed)
 
         return before, after
 

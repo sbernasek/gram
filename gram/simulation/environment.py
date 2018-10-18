@@ -200,7 +200,7 @@ class ConditionSimulation(PerturbationSimulation):
         self.saveall = saveall
         super().save(join(path, 'simulation.pkl'))
 
-    def simulate(self, N=100, conditions=None, inplace=True):
+    def simulate(self, N=100, conditions=None, seed=None, inplace=True):
         """
         Run perturbation simulation for each environmental condition.
 
@@ -209,6 +209,8 @@ class ConditionSimulation(PerturbationSimulation):
             N (int) - number of independent simulation trajectories
 
             conditions (array like) - simulation conditions
+
+            seed (int) - seed for random number generator
 
             inplace (bool) - if True, store simulation trajectories
 
@@ -226,7 +228,7 @@ class ConditionSimulation(PerturbationSimulation):
         # run simulations
         dynamics = OrderedDict()
         for condition in conditions:
-            before, after = super().simulate(condition, N)
+            before, after = super().simulate(condition, N, seed=seed)
             dynamics[condition] = (before, after)
 
         # set/return dynamics

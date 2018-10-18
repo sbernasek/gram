@@ -1,4 +1,5 @@
 from os import getcwd
+from time import time
 from argparse import ArgumentParser
 
 from gram.simulation.environment import ConditionSimulation
@@ -42,7 +43,9 @@ simulation_path = args['path'][0]
 simulation = ConditionSimulation.load(simulation_path)
 
 # run simulation and comparison
-simulation.simulate(N=args['trajectories'])
+seed = int(time())
+print('Seed for random number generator: ', seed)
+simulation.simulate(N=args['trajectories'], seed=seed)
 simulation.compare(deviations=bool(args['use_deviations']), inplace=True)
 
 # save simulation
