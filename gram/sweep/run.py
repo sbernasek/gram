@@ -42,9 +42,11 @@ simulation_path = args['path'][0]
 # load simulation
 simulation = ConditionSimulation.load(simulation_path)
 
-# run simulation and comparison
+# generate seed for random number generator
 seed = int(time())
 print('Seed for random number generator: ', seed)
+
+# run simulation and comparison
 simulation.simulate(N=args['trajectories'], seed=seed)
 simulation.compare(deviations=bool(args['use_deviations']), inplace=True)
 

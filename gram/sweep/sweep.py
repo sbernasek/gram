@@ -117,10 +117,11 @@ class Sweep:
         job_script.write('#MSUB -e ${P}/errlog \n')
         job_script.write('#MSUB -N $(basename ${P}) \n')
         job_script.write('#MSUB -l nodes=1:ppn=1 \n')
-        job_script.write('#MSUB -l mem=8gb \n\n')
+        job_script.write('#MSUB -l mem=4gb \n\n')
 
-        # load python module
-        job_script.write('module load python/anaconda3.6\n\n')
+        # load python module and metabolism virtual environment
+        job_script.write('module load python/anaconda3.6\n')
+        job_script.write('source activate ~/pythonenvs/metabolism_env\n\n')
 
         # move to sweep directory
         job_script.write('cd {:s} \n\n'.format(sweep_path))
