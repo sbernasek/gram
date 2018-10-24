@@ -59,20 +59,20 @@ args = vars(parser.parse_args())
 
 # ============================= RUN SCRIPT ====================================
 
+
 # instantiate sweep object
 if args['model'] == 'linear':
-    sweep_obj = sweep.LinearSweep()
+    sweep_obj = sweep.LinearSweep(num_samples=args['num_samples'])
 elif args['model'] == 'hill':
-    sweep_obj = sweep.HillSweep()
+    sweep_obj = sweep.HillSweep(num_samples=args['num_samples'])
 elif args['model'] == 'twostate':
-    sweep_obj = sweep.TwoStateSweep()
+    sweep_obj = sweep.TwoStateSweep(num_samples=args['num_samples'])
 else:
     raise ValueError('{:s} model type not recognized.'.format(args['model']))
 
 # build sweep
 sweep_obj.build(
     directory=args['path'],
-    num_samples=args['num_samples'],
     num_trajectories=args['num_trajectories'],
     saveall=args['saveall'],
     use_deviations=args['use_deviations'],
