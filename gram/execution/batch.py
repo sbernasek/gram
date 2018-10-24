@@ -19,7 +19,7 @@ class Batch:
 
         parameters (iterable) - parameter sets
 
-        simulation_paths (dict) - paths to simulation directories
+        simulation_paths (dict) - relative paths to simulation directories
 
         sim_kw (dict) - keyword arguments for simulation
 
@@ -40,6 +40,24 @@ class Batch:
         self.simulation_paths = {}
         self.parameters = parameters
 
+    def __getitem__(self, index):
+        """ Returns simulation instance. """
+        return self.load_simulation(index)
+
+    def __iter__(self):
+        """ Iterate over serialized simulations. """
+        self.count = 0
+        return self
+
+    def __next__(self):
+        """ Returns next simulation instance. """
+        if self.count <= len(self.simulation_paths):
+            simulation = self.load_simulation(self.count)
+            self.count += 1
+            return simulation
+        else:
+            raise StopIteration
+
     @property
     def N(self):
         """ Number of samples in parameter space. """
@@ -50,6 +68,7 @@ class Batch:
         """ Load batch from target <path>. """
         with open(join(path, 'batch.pkl'), 'rb') as file:
             batch = pickle.load(file)
+        batch.path = path
         return batch
 
     @staticmethod
@@ -86,6 +105,9 @@ class Batch:
         # declare outer script that reads PATH from file
         job_script = open(job_path, 'w')
         job_script.write('#!/bin/bash\n')
+
+        # move to batch directory
+        job_script.write('cd {:s} \n\n'.format(batch_path))
 
         # begin outer script for processing batch
         job_script.write('while IFS=$\'\\t\' read P\n')
@@ -197,7 +219,7 @@ class Batch:
         # build simulations
         for i, parameters in enumerate(self.parameters):
             simulation_path = join(self.path, 'simulations', '{:d}'.format(i))
-            self.simulation_paths[i] = simulation_path
+            self.simulation_paths[i] = relpath(simulation_path, self.path)
             self.build_simulation(parameters, simulation_path, **sim_kw)
 
         # save serialized batch
@@ -241,6 +263,22 @@ class Batch:
 
         # save simulation
         simulation.save(simulation_path)
+
+    def load_simulation(self, index):
+        """
+        Load simulation instance from file.
+
+        Args:
+
+            index (int) - simulation index
+
+        Returns:
+
+            simulation (ConditionSimulation)
+
+        """
+        simulation_path = join(self.path, self.simulation_paths[index])
+        return ConditionSimulation.load(simulation_path)
 
     def apply(self, func):
         """
