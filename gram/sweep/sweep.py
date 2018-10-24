@@ -1,41 +1,41 @@
-from os.path import join, abspath, relpath, isdir
-from os import mkdir, chmod, pardir
-import shutil
-import pickle
 import numpy as np
-from time import time
-from datetime import datetime
 
+from ..execution.batch import Batch
 from .sampling import LogSampler
-from ..simulation.environment import ConditionSimulation
 from ..models.linear import LinearModel
 from ..models.hill import HillModel
 from ..models.twostate import TwoStateModel
 
 
-class Sweep:
+class Sweep(Batch):
     """
-    Class defines a single parameter sweep of a given model.
+    Class defines a parameter sweep of a given model.
 
     Attributes:
-
-        path (str) - path to sweep directory
-
-        simulation_paths (dict) - paths to simulation directories
 
         base (np.ndarray[float]) - base parameter values
 
         delta (float or np.ndarray[float]) - log-deviations about base
 
-        sampler (LogSampler) - sobol sample generator
+    Inherited attributes:
+
+        path (str) - path to batch directory
 
         parameters (np.ndarray[float]) - sampled parameter values
 
+        simulation_paths (dict) - paths to simulation directories
+
         sim_kw (dict) - keyword arguments for simulation
+
+        results (dict) - {simulation_id: results_dict} pairs
+
+    Properties:
+
+        N (int) - number of samples in parameter space
 
     """
 
-    def __init__(self, base, delta=0.5):
+    def __init__(self, base, delta=0.5, num_samples=1000):
         """
         Instantiate parameter sweep.
 
@@ -45,237 +45,40 @@ class Sweep:
 
             delta (float or np.ndarray[float]) - log-deviations about base
 
+            num_samples (int) - number of samples in parameter space
+
         """
 
         self.base = base
         self.delta = delta
-        self.sampler = LogSampler(base-delta, base+delta)
 
-    @property
-    def N(self):
-        """ Number of samples. """
-        return self.samples.shape[0]
+        # sample parameter space
+        sampler = LogSampler(base-delta, base+delta)
+        parameters = sampler.sample(num_samples)
 
-    @staticmethod
-    def load(path):
-        """ Load sweep from target <path>. """
-        with open(join(path, 'sweep.pkl'), 'rb') as file:
-            sweep = pickle.load(file)
-        return sweep
+        # instantiate batch job
+        super().__init__(parameters=parameters)
 
-    @staticmethod
-    def build_submission_script(path,
-                                num_trajectories,
-                                saveall,
-                                use_deviations,
-                                allocation='p30653'):
-        """
-        Writes job submission script.
+    # def aggregate(self):
+    #     """
+    #     Aggregate results from each simulation.
+    #     """
 
-        Args:
+    #     sim.comparisons
 
-            path (str) - sweep path
 
-            num_trajectories (int) - number of simulation trajectories
+    #     def get_error(sim):
 
-            saveall (bool) - if True, save simulation trajectories
+    #         sim.comparisons
 
-            use_deviations (bool) - if True, use deviation variables
 
-            allocation (str) - project allocation, e.g. p30653 (comp. bio)
 
-        """
 
-        # define paths
-        sweep_path = abspath(path)
-        job_path = join(sweep_path, 'scripts', 'job_submission.sh')
+    #     comparisons[condition] = comparison
 
-        # copy run script to scripts directory
-        run_path = join(abspath(__file__).rsplit('/', maxsplit=1)[0], 'run.py')
-        shutil.copy(run_path, join(path, 'scripts'))
 
-        # declare outer script that reads PATH from file
-        job_script = open(job_path, 'w')
-        job_script.write('#!/bin/bash\n')
 
-        # move to sweep directory
-        job_script.write('cd {:s} \n\n'.format(sweep_path))
-
-        # begin script for overall job
-        job_script.write('while IFS=$\'\\t\' read P\n')
-        job_script.write('do\n')
-        job_script.write('   JOB=`msub - << EOJ\n\n')
-
-        # =========== begin submission script for individual job =============
-        job_script.write('#! /bin/bash\n')
-        job_script.write('#MSUB -A {:s} \n'.format(allocation))
-        job_script.write('#MSUB -q short \n')
-        job_script.write('#MSUB -l walltime=04:00:00 \n')
-        job_script.write('#MSUB -m abe \n')
-        #job_script.write('#MSUB -M sebastian@u.northwestern.edu \n')
-        job_script.write('#MSUB -o ${P}/outlog \n')
-        job_script.write('#MSUB -e ${P}/errlog \n')
-        job_script.write('#MSUB -N $(basename ${P}) \n')
-        job_script.write('#MSUB -l nodes=1:ppn=1 \n')
-        job_script.write('#MSUB -l mem=4gb \n\n')
-
-        # load python module and metabolism virtual environment
-        job_script.write('module load python/anaconda3.6\n')
-        job_script.write('source activate ~/pythonenvs/metabolism_env\n\n')
-
-        # move to sweep directory
-        job_script.write('cd {:s} \n\n'.format(sweep_path))
-
-        # run script
-        job_script.write('python ./scripts/run.py ${P}')
-        args = (num_trajectories, saveall, use_deviations)
-        job_script.write(' -N {:d} -S {:d} -D {:d}\n'.format(*args))
-        job_script.write('EOJ\n')
-        job_script.write('`\n\n')
-        # ============= end submission script for individual job =============
-
-        # print job id
-        job_script.write('echo "JobID = ${JOB} submitted on `date`"\n')
-        job_script.write('done < ./scripts/paths.txt \n')
-        job_script.write('exit\n')
-
-        # close the file
-        job_script.close()
-
-        # change the permissions
-        chmod(job_path, 0o755)
-
-    def build_paths_file(self):
-        """ Writes file containing all simulation paths. """
-        paths = open(join(self.path, 'scripts', 'paths.txt'), 'w')
-        for path in self.simulation_paths.values():
-            paths.write('{:s}\n'.format(path))
-        paths.close()
-
-    def build_sweep_directory(self, directory='./'):
-        """
-        Create directory for sweep.
-
-        Args:
-
-            directory (str) - destination path
-
-        """
-
-        # assign name to sweep
-        timestamp = datetime.fromtimestamp(time()).strftime('%y%m%d_%H%M%S')
-        name = '{:s}_{:s}'.format(self.__class__.__name__, timestamp)
-
-        # create directory (overwrite existing one)
-        path = join(directory, name)
-        if not isdir(path):
-            mkdir(path)
-        self.path = path
-
-        # make subdirectories for simulations and scripts
-        mkdir(join(path, 'scripts'))
-        mkdir(join(path, 'simulations'))
-
-    def build(self,
-              directory='./',
-              num_samples=10,
-              num_trajectories=1000,
-              saveall=False,
-              use_deviations=False,
-              allocation='p30653',
-              **sim_kw):
-        """
-        Build directory tree for a parameter sweep. Instantiates and saves a simulation instance for each parameter sample, then generates a single shell script to submit each simulation as a separate batch job.
-
-        Args:
-
-            directory (str) - destination path
-
-            num_samples (int) - number of samples in parameter space
-
-            num_trajectories (int) - number of simulation trajectories
-
-            saveall (bool) - if True, save simulation trajectories
-
-            use_deviations (bool) - if True, use deviation variables
-
-            allocation (str) - project allocation
-
-            sim_kw (dict) - keyword arguments for ConditionSimulation
-
-        """
-
-        # create sweep directory
-        self.build_sweep_directory(directory)
-
-        # store parameters
-        self.parameters = self.sampler.sample(num_samples)
-        self.sim_kw = sim_kw
-        self.simulation_paths = {}
-
-        # build simulations
-        for i, parameters in enumerate(self.parameters):
-            simulation_path = join(self.path, 'simulations', '{:d}'.format(i))
-            self.simulation_paths[i] = simulation_path
-            self.build_simulation(parameters, simulation_path, **sim_kw)
-
-        # save serialized sweep
-        with open(join(self.path, 'sweep.pkl'), 'wb') as file:
-            pickle.dump(self, file, protocol=-1)
-
-        # build parameter file
-        self.build_paths_file()
-
-        # build job submission script
-        self.build_submission_script(self.path,
-                                     num_trajectories,
-                                     saveall,
-                                     use_deviations,
-                                     allocation=allocation)
-
-    @staticmethod
-    def build_model(parameters):
-        """
-        Returns a model instance defined by the provided parameters.
-
-        Args:
-
-            parameters (np.ndarray[float]) - model parameters
-
-        Returns:
-
-            model (Cell instance)
-
-        """
-        pass
-
-    @classmethod
-    def build_simulation(cls, parameters, simulation_path, **kwargs):
-        """
-        Builds and saves a simulation instance for a set of parameters.
-
-        Args:
-
-            parameters (np.ndarray[float]) - parameter values
-
-            simulation_path (str) - simulation path
-
-            kwargs: keyword arguments for ConditionSimulation
-
-        """
-
-        # build model
-        model = cls.build_model(parameters)
-
-        # instantiate simulation
-        simulation = ConditionSimulation(model, **kwargs)
-
-        # create simulation directory
-        if not isdir(simulation_path):
-            mkdir(simulation_path)
-
-        # save simulation
-        simulation.save(simulation_path)
+    #     self.apply(func)
 
 
 class LinearSweep(Sweep):
@@ -295,15 +98,17 @@ class LinearSweep(Sweep):
 
     """
 
-    def __init__(self, base=None, delta=0.5):
+    def __init__(self, base=None, delta=0.5, num_samples=1000):
         """
-        Instantiate parameter sweep.
+        Instantiate parameter sweep of a linear model.
 
         Args:
 
             base (np.ndarray[float]) - base parameter values
 
             delta (float or np.ndarray[float]) - log-deviations about base
+
+            num_samples (int) - number of samples in parameter space
 
         """
 
@@ -312,7 +117,7 @@ class LinearSweep(Sweep):
             base = np.array([0, 0, 0, 0, -2, -3, -4.5, -4.5, -4.5])
 
         # call parent instantiation
-        super().__init__(base, delta)
+        super().__init__(base, delta, num_samples)
 
     @staticmethod
     def build_model(parameters):
@@ -345,7 +150,7 @@ class LinearSweep(Sweep):
 class HillSweep(Sweep):
 
     """
-    Parameter sweep for hill model. Parameters are:
+    Parameter sweep of a hill model. Parameters are:
 
         0: transcription hill coefficient
         1: transcription rate constant
@@ -359,15 +164,17 @@ class HillSweep(Sweep):
 
     """
 
-    def __init__(self, base=None, delta=0.5):
+    def __init__(self, base=None, delta=0.5, num_samples=1000):
         """
-        Instantiate parameter sweep.
+        Instantiate parameter sweep of a Hill model.
 
         Args:
 
             base (np.ndarray[float]) - base parameter values
 
             delta (float or np.ndarray[float]) - log-deviations about base
+
+            num_samples (int) - number of samples in parameter space
 
         """
 
@@ -376,7 +183,7 @@ class HillSweep(Sweep):
             base = np.array([0, 0, 0, -2, -3, -4, 0, -5, -4])
 
         # call parent instantiation
-        super().__init__(base, delta)
+        super().__init__(base, delta, num_samples)
 
     @staticmethod
     def build_model(parameters):
@@ -405,10 +212,11 @@ class HillSweep(Sweep):
 
         return model
 
+
 class TwoStateSweep(Sweep):
 
     """
-    Parameter sweep for twostate model. Parameters are:
+    Parameter sweep of a twostate model. Parameters are:
 
         0: activation rate constant
         1: transcription rate constant
@@ -422,15 +230,17 @@ class TwoStateSweep(Sweep):
 
     """
 
-    def __init__(self, base=None, delta=0.5):
+    def __init__(self, base=None, delta=0.5, num_samples=1000):
         """
-        Instantiate parameter sweep.
+        Instantiate parameter sweep of a twostate model.
 
         Args:
 
             base (np.ndarray[float]) - base parameter values
 
             delta (float or np.ndarray[float]) - log-deviations about base
+
+            num_samples (int) - number of samples in parameter space
 
         """
 
@@ -439,7 +249,7 @@ class TwoStateSweep(Sweep):
             base = np.array([0, 0, 0, -1, -2, -3, -4, -4.5, -4])
 
         # call parent instantiation
-        super().__init__(base, delta)
+        super().__init__(base, delta, num_samples)
 
     @staticmethod
     def build_model(parameters):
