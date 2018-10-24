@@ -46,6 +46,11 @@ simulation = ConditionSimulation.load(simulation_path)
 seed = int(time())
 print('Seed for random number generator: ', seed)
 
+# write seed to file
+seed_recorder = open(join(simulation_path, 'seed.txt'), 'w')
+seed_recorder.write('{:d}\n'.format(seed))
+seed_recorder.close()
+
 # run simulation and comparison
 simulation.simulate(N=args['trajectories'], seed=seed)
 simulation.compare(deviations=bool(args['use_deviations']), inplace=True)

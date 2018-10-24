@@ -51,7 +51,7 @@ class Batch:
 
     def __next__(self):
         """ Returns next simulation instance. """
-        if self.count <= len(self.simulation_paths):
+        if self.count < len(self.simulation_paths):
             simulation = self.load_simulation(self.count)
             self.count += 1
             return simulation
