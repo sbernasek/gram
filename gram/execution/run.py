@@ -18,7 +18,7 @@ parser.add_argument('path',
 parser.add_argument('-S', '--saveall',
                     help='Save simulation trajectories.',
                     type=int,
-                    default=False,
+                    default=0,
                     required=False)
 
 # number of trajectories
@@ -45,12 +45,6 @@ simulation = ConditionSimulation.load(simulation_path)
 
 # generate seed for random number generator
 seed = int(time())
-print('Seed for random number generator: ', seed)
-
-# write seed to file
-seed_recorder = open(join(simulation_path, 'seed.txt'), 'w')
-seed_recorder.write('{:d}\n'.format(seed))
-seed_recorder.close()
 
 # run simulation and comparison
 simulation.simulate(N=args['trajectories'], seed=seed)
