@@ -114,7 +114,7 @@ class LinearSweep(Sweep):
 
         # define parameter ranges, log10(val)
         if base is None:
-            base = np.array([0, 0, 0, 0, -2, -3, -4.5, -4.5, -4.5])
+            base = np.array([0, 0, 0, 0, -2, -3, -4, -4, -4])
 
         # call parent instantiation
         super().__init__(base, delta, num_samples)
@@ -180,7 +180,7 @@ class HillSweep(Sweep):
 
         # define parameter ranges, log10(val)
         if base is None:
-            base = np.array([0, 0, 0, -2, -3, -4, 0, -5, -4])
+            base = np.array([0, 0, 0, -2, -3, 4, 0, -5, -4])
 
         # call parent instantiation
         super().__init__(base, delta, num_samples)
