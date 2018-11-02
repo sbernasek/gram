@@ -4,6 +4,8 @@ from argparse import ArgumentParser
 from gram.sweep import sweep
 
 
+batch_size=25,
+
 # ======================== PARSE SCRIPT ARGUMENTS =============================
 
 parser = ArgumentParser(description='Generate a parameter sweep.')
@@ -27,6 +29,13 @@ parser.add_argument('-n', '--num_samples',
                     default=10,
                     required=False)
 
+# number of simulations per batch job submitted to quest
+parser.add_argument('-b', '--batch_size',
+                    help='Number of simulations per batch.',
+                    type=int,
+                    default=25,
+                    required=False)
+
 # number of stochastic simulation trajectories
 parser.add_argument('-N', '--num_trajectories',
                     help='Number of stochastic simulation trajectories.',
@@ -42,7 +51,7 @@ parser.add_argument('-S', '--saveall',
                     required=False)
 
 # number of trajectories
-parser.add_argument('-D', '--use_deviations',
+parser.add_argument('-D', '--deviations',
                     help='Use deviation variables.',
                     type=bool,
                     default=False,
@@ -73,10 +82,8 @@ else:
 # build sweep
 sweep_obj.build(
     directory=args['path'],
+    batch_size=args['batch_size'],
     num_trajectories=args['num_trajectories'],
     saveall=args['saveall'],
-    use_deviations=args['use_deviations'],
+    deviations=args['deviations'],
     allocation=args['allocation'])
-
-# USEFUL COMMANDS
-# showq -w acct=p30653

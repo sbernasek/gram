@@ -76,8 +76,7 @@ class Batch:
     def build_submission_script(path,
                                 num_trajectories,
                                 saveall,
-                                use_deviations,
-                                batch_size=25,
+                                deviations,
                                 allocation='p30653'):
         """
         Writes job submission script.
@@ -90,9 +89,7 @@ class Batch:
 
             saveall (bool) - if True, save simulation trajectories
 
-            use_deviations (bool) - if True, use deviation variables
-
-            batch_size (int) - number of simulations per batch
+            deviations (bool) - if True, use deviation variables
 
             allocation (str) - project allocation, e.g. p30653 (comp. bio)
 
@@ -141,7 +138,7 @@ class Batch:
 
         # run script
         job_script.write('python ./scripts/run_batch.py ${P}')
-        args = (num_trajectories, saveall, use_deviations)
+        args = (num_trajectories, saveall, deviations)
         job_script.write(' -N {:d} -S {:d} -D {:d}\n'.format(*args))
         job_script.write('EOJ\n')
         job_script.write('`\n\n')
@@ -223,10 +220,10 @@ class Batch:
 
     def build(self,
               directory='./',
+              batch_size=25,
               num_trajectories=5000,
               saveall=False,
-              use_deviations=False,
-              batch_size=25,
+              deviations=False,
               allocation='p30653',
               **sim_kw):
         """
@@ -236,13 +233,13 @@ class Batch:
 
             directory (str) - destination path
 
+            batch_size (int) - number of simulations per batch
+
             num_trajectories (int) - number of simulation trajectories
 
             saveall (bool) - if True, save simulation trajectories
 
-            use_deviations (bool) - if True, use deviation variables
-
-            batch_size (int) - number of simulations per batch
+            deviations (bool) - if True, use deviation variables
 
             allocation (str) - project allocation
 
@@ -274,8 +271,7 @@ class Batch:
         self.build_submission_script(self.path,
                                      num_trajectories,
                                      saveall,
-                                     use_deviations,
-                                     batch_size=batch_size,
+                                     deviations,
                                      allocation=allocation)
 
     @classmethod
