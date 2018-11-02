@@ -1,6 +1,5 @@
 from os import getcwd
 from os.path import join
-from time import time
 from argparse import ArgumentParser
 
 from gram.simulation.environment import ConditionSimulation
@@ -8,9 +7,9 @@ from gram.simulation.environment import ConditionSimulation
 
 # ======================== PARSE SCRIPT ARGUMENTS =============================
 
-parser = ArgumentParser(description='Run a perturbation simulation.')
+parser = ArgumentParser(description='Run a batch of simulations.')
 
-# simulation directory
+# batch file
 parser.add_argument('path',
                     nargs=1)
 
@@ -29,26 +28,33 @@ parser.add_argument('-N', '--trajectories',
                     required=False)
 
 # number of trajectories
-parser.add_argument('-D', '--use_deviations',
+parser.add_argument('-D', '--deviations',
                     help='Use deviation variables.',
                     type=int,
                     default=False,
                     required=False)
 
 args = vars(parser.parse_args())
-simulation_path = args['path'][0]
 
 # ============================= RUN SCRIPT ====================================
 
-# load simulation
-simulation = ConditionSimulation.load(simulation_path)
+# define simulation arguments
+skwargs = dict(N=args['trajectories'])
+ckwargs = dict(deviations=bool(args['deviations']))
+saveall = bool(args['saveall'])
 
-# generate seed for random number generator
-seed = int(time())
+# read simulation paths from batch file
+with open(args['path'], 'r') as batch_file:
+     simulation_paths = batch_file.readlines()
 
-# run simulation and comparison
-simulation.simulate(N=args['trajectories'], seed=seed)
-simulation.compare(deviations=bool(args['use_deviations']), inplace=True)
+# run each simulation
+for path in simulation_paths:
 
-# save simulation
-simulation.save(simulation_path, saveall=bool(args['saveall']))
+     # load simulation
+     simulation = ConditionSimulation.load(path)
+
+     # run simulation and comparison
+     simulation.run(skwargs=skwargs, ckwargs=ckwargs)
+
+     # save simulation
+     simulation.save(path, saveall=saveall)

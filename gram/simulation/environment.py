@@ -1,6 +1,7 @@
 from os.path import join, isdir
 from os import mkdir
 from collections import OrderedDict
+from time import time
 import matplotlib.pyplot as plt
 
 from genessa.timeseries.base import TimeSeries
@@ -200,7 +201,7 @@ class ConditionSimulation(PerturbationSimulation):
         self.saveall = saveall
         super().save(join(path, 'simulation.pkl'))
 
-    def simulate(self, N=100, conditions=None, seed=None, inplace=True):
+    def simulate(self, N=1000, conditions=None, seed=None, inplace=True):
         """
         Run perturbation simulation for each environmental condition.
 
@@ -239,7 +240,7 @@ class ConditionSimulation(PerturbationSimulation):
 
     def compare(self, mode=None, deviations=False, inplace=True, **kwargs):
         """
-        Run perturbation simulation for each environmental condition.
+        Evaluate comparison for each environmental condition.
 
         Args:
 
@@ -272,6 +273,28 @@ class ConditionSimulation(PerturbationSimulation):
             self.comparisons = comparisons
         else:
             return comparisons
+
+    def run(self, skwargs={}, ckwargs={}):
+        """
+        Run simulations and evaluate comparisons.
+
+        Args:
+
+          skwargs (dict) - keyword arguments for simulation
+
+          ckwargs (dict) - keyword arguments for comparison
+
+        """
+
+        # generate seed for random number generator
+        if 'seed' in skwargs.keys():
+            seed = skwargs.pop('seed')
+        else:
+            seed = int(time())
+
+        # run simulation and comparison
+        self.simulate(seed=seed, **skwargs)
+        self.compare(**ckwargs)
 
     def plot_comparison(self, trajectories=False, axes=None):
         """

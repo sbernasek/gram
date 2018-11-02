@@ -1,6 +1,7 @@
 from os.path import join, abspath, relpath, isdir
 from os import mkdir, chmod, pardir
 import shutil
+from glob import glob
 import pickle
 import numpy as np
 from time import time
@@ -11,7 +12,7 @@ from ..simulation.environment import ConditionSimulation
 
 class Batch:
     """
-    Class defines a batch of job submissions for Quest.
+    Class defines a collection of batch job submissions for Quest.
 
     Attributes:
 
@@ -76,13 +77,14 @@ class Batch:
                                 num_trajectories,
                                 saveall,
                                 use_deviations,
+                                batch_size=25,
                                 allocation='p30653'):
         """
         Writes job submission script.
 
         Args:
 
-            path (str) - batch path
+            path (str) - path to simulation top directory
 
             num_trajectories (int) - number of simulation trajectories
 
@@ -90,24 +92,27 @@ class Batch:
 
             use_deviations (bool) - if True, use deviation variables
 
+            batch_size (int) - number of simulations per batch
+
             allocation (str) - project allocation, e.g. p30653 (comp. bio)
 
         """
 
         # define paths
-        batch_path = abspath(path)
-        job_path = join(batch_path, 'scripts', 'submit.sh')
+        path = abspath(path)
+        job_script_path = join(path, 'scripts', 'submit.sh')
 
         # copy run script to scripts directory
-        run_path = join(abspath(__file__).rsplit('/', maxsplit=1)[0], 'run.py')
+        run_path = join(abspath(__file__)
+        run_path = run_path.rsplit('/', maxsplit=1)[0], 'run_batch.py')
         shutil.copy(run_path, join(path, 'scripts'))
 
         # declare outer script that reads PATH from file
-        job_script = open(job_path, 'w')
+        job_script = open(job_script_path, 'w')
         job_script.write('#!/bin/bash\n')
 
         # move to batch directory
-        job_script.write('cd {:s} \n\n'.format(batch_path))
+        job_script.write('cd {:s} \n\n'.format(path))
 
         # begin outer script for processing batch
         job_script.write('while IFS=$\'\\t\' read P\n')
@@ -118,7 +123,7 @@ class Batch:
         job_script.write('#! /bin/bash\n')
         job_script.write('#MSUB -A {:s} \n'.format(allocation))
         job_script.write('#MSUB -q short \n')
-        job_script.write('#MSUB -l walltime=01:00:00 \n')
+        job_script.write('#MSUB -l walltime=04:00:00 \n')
         job_script.write('#MSUB -m abe \n')
         #job_script.write('#MSUB -M sebastian@u.northwestern.edu \n')
         job_script.write('#MSUB -o ${P}/outlog \n')
@@ -135,7 +140,7 @@ class Batch:
         job_script.write('cd {:s} \n\n'.format(batch_path))
 
         # run script
-        job_script.write('python ./scripts/run.py ${P}')
+        job_script.write('python ./scripts/run_batch.py ${P}')
         args = (num_trajectories, saveall, use_deviations)
         job_script.write(' -N {:d} -S {:d} -D {:d}\n'.format(*args))
         job_script.write('EOJ\n')
@@ -143,8 +148,9 @@ class Batch:
         # ============= end submission script for individual job =============
 
         # print job id
-        job_script.write('echo "JobID = ${JOB} submitted on `date`"\n')
-        job_script.write('done < ./scripts/paths.txt \n')
+        #job_script.write('echo "JobID = ${JOB} submitted on `date`"\n')
+        job_script.write('done < ./batches/index.txt \n')
+        job_script.write('echo "All batches submitted as of `date`"\n')
         job_script.write('exit\n')
 
         # close the file
@@ -153,12 +159,42 @@ class Batch:
         # change the permissions
         chmod(job_path, 0o755)
 
-    def build_paths_file(self):
-        """ Writes file containing all simulation paths. """
-        paths = open(join(self.path, 'scripts', 'paths.txt'), 'w')
-        for path in self.simulation_paths.values():
-            paths.write('{:s}\n'.format(path))
-        paths.close()
+    def build_path_files(self, batch_size=25):
+        """
+        Creates directory and writes simulation paths for each batch.
+
+        Args:
+
+            batch_size (int) - number of simulations per batch
+
+        """
+
+        # get directory for all batches
+        batches_dir = join(self.path, 'batches')
+
+        # create index file for batches
+        batches_index = open(join(batches_dir, 'index.txt', 'w'))
+
+        # write file containing simulation paths for each batch
+        for i, simulation_path in self.simulation_paths.items():
+
+            # determine batch ID
+            batch_id = i // batch_size
+
+            # open batch file and append to index
+            if i % batch_size == 0:
+                batch_dir = join(batches_dir, '{:d}.txt'.format(batch_id))
+                batch_file = open(batch_dir, 'w')
+                batches_index.write('{:s}\n'.format(batch_dir))
+
+            # write paths to batch file
+            batch_file.write('{:s}\n'.format(simulation_path))
+
+            # close batch file
+            if i % batch_size == (batch_size - 1):
+                batch_file.close()
+
+        batches_index.close()
 
     def make_directory(self, directory='./'):
         """
@@ -183,12 +219,14 @@ class Batch:
         # make subdirectories for simulations and scripts
         mkdir(join(path, 'scripts'))
         mkdir(join(path, 'simulations'))
+        mkdir(join(path, 'batches'))
 
     def build(self,
               directory='./',
-              num_trajectories=1000,
+              num_trajectories=5000,
               saveall=False,
               use_deviations=False,
+              batch_size=25,
               allocation='p30653',
               **sim_kw):
         """
@@ -204,6 +242,8 @@ class Batch:
 
             use_deviations (bool) - if True, use deviation variables
 
+            batch_size (int) - number of simulations per batch
+
             allocation (str) - project allocation
 
             sim_kw (dict) - keyword arguments for ConditionSimulation
@@ -215,6 +255,7 @@ class Batch:
 
         # store parameters (e.g. pulse conditions)
         self.sim_kw = sim_kw
+        self.batch_size = batch_size
 
         # build simulations
         for i, parameters in enumerate(self.parameters):
@@ -227,13 +268,14 @@ class Batch:
             pickle.dump(self, file, protocol=-1)
 
         # build parameter file
-        self.build_paths_file()
+        self.build_path_files(batch_size=batch_size)
 
         # build job submission script
         self.build_submission_script(self.path,
                                      num_trajectories,
                                      saveall,
                                      use_deviations,
+                                     batch_size=batch_size,
                                      allocation=allocation)
 
     @classmethod
