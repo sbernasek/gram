@@ -43,18 +43,17 @@ skwargs = dict(N=args['trajectories'])
 ckwargs = dict(deviations=bool(args['deviations']))
 saveall = bool(args['saveall'])
 
-# read simulation paths from batch file
-with open(args['path'], 'r') as batch_file:
-     simulation_paths = batch_file.readlines()
+# run each simulation in batch file
+with open(args['path'][0], 'r') as batch_file:
 
-# run each simulation
-for path in simulation_paths:
+     # run each simulation
+     for path in batch_file.readlines():
 
-     # load simulation
-     simulation = ConditionSimulation.load(path)
+          # load simulation
+          simulation = ConditionSimulation.load(path.strip())
 
-     # run simulation and comparison
-     simulation.run(skwargs=skwargs, ckwargs=ckwargs)
+          # run simulation and comparison
+          simulation.run(skwargs=skwargs, ckwargs=ckwargs)
 
-     # save simulation
-     simulation.save(path, saveall=saveall)
+          # save simulation
+          simulation.save(path.strip(), saveall=saveall)

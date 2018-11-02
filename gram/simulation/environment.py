@@ -186,10 +186,17 @@ class ConditionSimulation(PerturbationSimulation):
         """
 
         if saveall:
+
+            # make a directory for simulation dynamics
+            dynamics_dir = join(path, 'dynamics')
+            if not isdir(dynamics_dir):
+                mkdir(dynamics_dir)
+
+            # save dynamics for each condition
             for condition, (before, after) in self.dynamics.items():
 
                 # make a directory
-                subdir = join(path, condition)
+                subdir = join(dynamics_dir, condition)
                 if not isdir(subdir):
                     mkdir(subdir)
 

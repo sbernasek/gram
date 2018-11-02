@@ -73,13 +73,69 @@ class Batch:
         return batch
 
     @staticmethod
+    def build_run_script(path,
+                        num_trajectories,
+                        saveall,
+                        deviations):
+        """
+        Writes bash run script for local use.
+
+        Args:
+
+            path (str) - path to simulation top directory
+
+            num_trajectories (int) - number of simulation trajectories
+
+            saveall (bool) - if True, save simulation trajectories
+
+            deviations (bool) - if True, use deviation variables
+
+        """
+
+        # define paths
+        path = abspath(path)
+        job_script_path = join(path, 'scripts', 'run.sh')
+
+        # copy run script to scripts directory
+        run_path = abspath(__file__).rsplit('/', maxsplit=1)[0]
+        run_path = join(run_path, 'run_batch.py')
+        shutil.copy(run_path, join(path, 'scripts'))
+
+        # declare outer script that reads PATH from file
+        job_script = open(job_script_path, 'w')
+        job_script.write('#!/bin/bash\n')
+
+        # move to batch directory
+        job_script.write('cd {:s} \n\n'.format(path))
+
+        # begin outer script for processing batch
+        # job_script.write('while IFS=$\'\\t\' read P\n')
+
+        # run each batch
+        job_script.write('echo "Starting all batches at `date`"\n')
+        job_script.write('while read P; do\n')
+        job_script.write('echo "Processing batch ${P}"\n')
+        job_script.write('python ./scripts/run_batch.py ${P}')
+        args = (num_trajectories, saveall, deviations)
+        job_script.write(' -N {:d} -S {:d} -D {:d}\n'.format(*args))
+        job_script.write('done < ./batches/index.txt \n')
+        job_script.write('echo "Completed all batches at `date`"\n')
+        job_script.write('exit\n')
+
+        # close the file
+        job_script.close()
+
+        # change the permissions
+        chmod(job_script_path, 0o755)
+
+    @staticmethod
     def build_submission_script(path,
                                 num_trajectories,
                                 saveall,
                                 deviations,
                                 allocation='p30653'):
         """
-        Writes job submission script.
+        Writes job submission script for QUEST.
 
         Args:
 
@@ -116,7 +172,7 @@ class Batch:
         job_script.write('do\n')
         job_script.write('   JOB=`msub - << EOJ\n\n')
 
-        # =========== begin submission script for individual job =============
+        # =========== begin submission script for individual batch ============
         job_script.write('#! /bin/bash\n')
         job_script.write('#MSUB -A {:s} \n'.format(allocation))
         job_script.write('#MSUB -q short \n')
@@ -134,7 +190,7 @@ class Batch:
         job_script.write('source activate ~/pythonenvs/metabolism_env\n\n')
 
         # move to batch directory
-        job_script.write('cd {:s} \n\n'.format(batch_path))
+        job_script.write('cd {:s} \n\n'.format(path))
 
         # run script
         job_script.write('python ./scripts/run_batch.py ${P}')
@@ -142,7 +198,7 @@ class Batch:
         job_script.write(' -N {:d} -S {:d} -D {:d}\n'.format(*args))
         job_script.write('EOJ\n')
         job_script.write('`\n\n')
-        # ============= end submission script for individual job =============
+        # ============= end submission script for individual batch ============
 
         # print job id
         #job_script.write('echo "JobID = ${JOB} submitted on `date`"\n')
@@ -154,7 +210,7 @@ class Batch:
         job_script.close()
 
         # change the permissions
-        chmod(job_path, 0o755)
+        chmod(job_script_path, 0o755)
 
     def build_path_files(self, batch_size=25):
         """
@@ -170,7 +226,8 @@ class Batch:
         batches_dir = join(self.path, 'batches')
 
         # create index file for batches
-        batches_index = open(join(batches_dir, 'index.txt'), 'w')
+        index_path = join(batches_dir, 'index.txt')
+        index = open(index_path, 'w')
 
         # write file containing simulation paths for each batch
         for i, simulation_path in self.simulation_paths.items():
@@ -180,9 +237,9 @@ class Batch:
 
             # open batch file and append to index
             if i % batch_size == 0:
-                batch_dir = join(batches_dir, '{:d}.txt'.format(batch_id))
-                batch_file = open(batch_dir, 'w')
-                batches_index.write('{:s}\n'.format(batch_dir))
+                batch_path = join(batches_dir, '{:d}.txt'.format(batch_id))
+                index.write('{:s}\n'.format(relpath(batch_path, self.path)))
+                batch_file = open(batch_path, 'w')
 
             # write paths to batch file
             batch_file.write('{:s}\n'.format(simulation_path))
@@ -190,8 +247,11 @@ class Batch:
             # close batch file
             if i % batch_size == (batch_size - 1):
                 batch_file.close()
+                chmod(batch_path, 0o755)
 
-        batches_index.close()
+        index.close()
+
+        chmod(index_path, 0o755)
 
     def make_directory(self, directory='./'):
         """
@@ -266,6 +326,12 @@ class Batch:
 
         # build parameter file
         self.build_path_files(batch_size=batch_size)
+
+        # build job run script
+        self.build_run_script(self.path,
+                                     num_trajectories,
+                                     saveall,
+                                     deviations)
 
         # build job submission script
         self.build_submission_script(self.path,
