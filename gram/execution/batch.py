@@ -170,7 +170,7 @@ class Batch:
         batches_dir = join(self.path, 'batches')
 
         # create index file for batches
-        batches_index = open(join(batches_dir, 'index.txt', 'w'))
+        batches_index = open(join(batches_dir, 'index.txt'), 'w')
 
         # write file containing simulation paths for each batch
         for i, simulation_path in self.simulation_paths.items():
