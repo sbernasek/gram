@@ -1,3 +1,4 @@
+dist/*.egg
 test/
 notebooks/*
 *.pyc
