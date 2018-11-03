@@ -164,7 +164,7 @@ class Batch:
         if walltime <= 4:
             queue = 'short'
         elif walltime <= 48:
-            queue = 'normal':
+            queue = 'normal'
         else:
             queue = 'long'
 
