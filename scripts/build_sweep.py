@@ -27,4 +27,5 @@ sweep.build(
     num_trajectories=args['number_of_trajectories'],
     saveall=args['save_all'],
     deviations=args['use_deviations'],
+    walltime=args['walltime'],
     allocation=args['allocation'])

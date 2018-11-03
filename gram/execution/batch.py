@@ -130,6 +130,7 @@ class Batch:
                                 num_trajectories=5000,
                                 saveall=False,
                                 deviations=False,
+                                walltime=10,
                                 allocation='p30653'):
         """
         Writes job submission script for QUEST.
@@ -143,6 +144,8 @@ class Batch:
             saveall (bool) - if True, save simulation trajectories
 
             deviations (bool) - if True, use deviation variables
+
+            walltime (int) - estimated job run time
 
             allocation (str) - project allocation, e.g. p30653 (comp. bio)
 
@@ -173,7 +176,7 @@ class Batch:
         job_script.write('#! /bin/bash\n')
         job_script.write('#MSUB -A {:s} \n'.format(allocation))
         job_script.write('#MSUB -q short \n')
-        job_script.write('#MSUB -l walltime=04:00:00 \n')
+        job_script.write('#MSUB -l walltime={0:02d}:00:00 \n'.format(walltime))
         job_script.write('#MSUB -m abe \n')
         #job_script.write('#MSUB -M sebastian@u.northwestern.edu \n')
         job_script.write('#MSUB -o ./log/$(basename ${P})/out \n')
@@ -288,6 +291,7 @@ class Batch:
               num_trajectories=5000,
               saveall=False,
               deviations=False,
+              walltime=10,
               allocation='p30653',
               **sim_kw):
         """
@@ -304,6 +308,8 @@ class Batch:
             saveall (bool) - if True, save simulation trajectories
 
             deviations (bool) - if True, use deviation variables
+
+            walltime (int) - estimated job run time
 
             allocation (str) - project allocation
 
@@ -342,6 +348,7 @@ class Batch:
                                      num_trajectories,
                                      saveall,
                                      deviations,
+                                     walltime=walltime,
                                      allocation=allocation)
 
     @classmethod

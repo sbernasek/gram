@@ -97,6 +97,13 @@ class SweepArguments(RunArguments):
                               required=False)
 
           # add keyword argument for project allocation
+          self.add_argument('-w', '--walltime',
+                              help='Estimated run time.',
+                              type=int,
+                              default=10,
+                              required=False)
+
+          # add keyword argument for project allocation
           self.add_argument('-A', '--allocation',
                               help='Project allocation.',
                               type=str,
