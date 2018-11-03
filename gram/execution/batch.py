@@ -176,7 +176,7 @@ class Batch:
         job_script.write('#! /bin/bash\n')
         job_script.write('#MSUB -A {:s} \n'.format(allocation))
         job_script.write('#MSUB -q short \n')
-        job_script.write('#MSUB -l walltime=02:00:00 \n')
+        job_script.write('#MSUB -l walltime=04:00:00 \n')
         job_script.write('#MSUB -m abe \n')
         #job_script.write('#MSUB -M sebastian@u.northwestern.edu \n')
         job_script.write('#MSUB -o ./log/outlog \n')
