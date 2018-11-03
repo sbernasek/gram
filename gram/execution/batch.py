@@ -170,7 +170,7 @@ class Batch:
         # begin outer script for processing batch
         job_script.write('while IFS=$\'\\t\' read P\n')
         job_script.write('do\n')
-        job_script.write('b_id=$(echo $(basename ${P}) | cut -f 1 -d '.')\n')
+        job_script.write('b_id=$(echo $(basename ${P}) | cut -f 1 -d \'.\')\n')
         job_script.write('   JOB=`msub - << EOJ\n\n')
 
         # =========== begin submission script for individual batch ============
