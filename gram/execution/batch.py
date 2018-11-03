@@ -170,6 +170,7 @@ class Batch:
         # begin outer script for processing batch
         job_script.write('while IFS=$\'\\t\' read P\n')
         job_script.write('do\n')
+        job_script.write('b_id=$(echo $(basename ${P}) | cut -f 1 -d '.')\n')
         job_script.write('   JOB=`msub - << EOJ\n\n')
 
         # =========== begin submission script for individual batch ============
@@ -179,9 +180,9 @@ class Batch:
         job_script.write('#MSUB -l walltime={0:02d}:00:00 \n'.format(walltime))
         job_script.write('#MSUB -m abe \n')
         #job_script.write('#MSUB -M sebastian@u.northwestern.edu \n')
-        job_script.write('#MSUB -o ./log/$(basename ${P})/out \n')
-        job_script.write('#MSUB -e ./log/$(basename ${P})/err \n')
-        job_script.write('#MSUB -N $(basename ${P}) \n')
+        job_script.write('#MSUB -o ./log/${b_id}/outlog \n')
+        job_script.write('#MSUB -e ./log/${b_id}/errlog \n')
+        job_script.write('#MSUB -N ${b_id} \n')
         job_script.write('#MSUB -l nodes=1:ppn=1 \n')
         job_script.write('#MSUB -l mem=1gb \n\n')
 
