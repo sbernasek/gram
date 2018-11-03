@@ -160,6 +160,14 @@ class Batch:
         run_path = join(run_path, 'run_batch.py')
         shutil.copy(run_path, join(path, 'scripts'))
 
+        # determine queue
+        if walltime <= 4:
+            queue = 'short'
+        elif walltime <= 48:
+            queue = 'normal':
+        else:
+            queue = 'long'
+
         # declare outer script that reads PATH from file
         job_script = open(job_script_path, 'w')
         job_script.write('#!/bin/bash\n')
@@ -176,7 +184,7 @@ class Batch:
         # =========== begin submission script for individual batch ============
         job_script.write('#! /bin/bash\n')
         job_script.write('#MSUB -A {:s} \n'.format(allocation))
-        job_script.write('#MSUB -q short \n')
+        job_script.write('#MSUB -q {:s} \n'.format(queue))
         job_script.write('#MSUB -l walltime={0:02d}:00:00 \n'.format(walltime))
         job_script.write('#MSUB -m abe \n')
         #job_script.write('#MSUB -M sebastian@u.northwestern.edu \n')
