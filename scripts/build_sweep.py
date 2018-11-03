@@ -1,89 +1,30 @@
-from os import getcwd
-from argparse import ArgumentParser
+from gram.execution.arguments import SweepArguments
+from gram.sweep.sweep import LinearSweep, HillSweep, TwoStateSweep
 
-from gram.sweep import sweep
-
-
-batch_size=25,
 
 # ======================== PARSE SCRIPT ARGUMENTS =============================
 
-parser = ArgumentParser(description='Generate a parameter sweep.')
-
-# sweeps directory
-parser.add_argument('path',
-                    nargs='?',
-                    default=getcwd())
-
-# model type
-parser.add_argument('-m', '--model',
-                    help='Model type.',
-                    type=str,
-                    default='linear',
-                    required=False)
-
-# number of parameter samples
-parser.add_argument('-n', '--num_samples',
-                    help='Number of parameter samples.',
-                    type=int,
-                    default=10,
-                    required=False)
-
-# number of simulations per batch job submitted to quest
-parser.add_argument('-b', '--batch_size',
-                    help='Number of simulations per batch.',
-                    type=int,
-                    default=25,
-                    required=False)
-
-# number of stochastic simulation trajectories
-parser.add_argument('-N', '--num_trajectories',
-                    help='Number of stochastic simulation trajectories.',
-                    type=int,
-                    default=1000,
-                    required=False)
-
-# save simulation trajectories
-parser.add_argument('-S', '--saveall',
-                    help='Save simulation trajectories.',
-                    type=bool,
-                    default=False,
-                    required=False)
-
-# number of trajectories
-parser.add_argument('-D', '--deviations',
-                    help='Use deviation variables.',
-                    type=bool,
-                    default=False,
-                    required=False)
-
-# project allocation
-parser.add_argument('-A', '--allocation',
-                    help='Project allocation.',
-                    type=str,
-                    default='p30653',
-                    required=False)
-
-args = vars(parser.parse_args())
+args = SweepArguments(description='Parameter sweep arguments.')
+model = args['model']
+num_samples = args['number_of_samples']
 
 # ============================= RUN SCRIPT ====================================
 
-
 # instantiate sweep object
-if args['model'] == 'linear':
-    sweep_obj = sweep.LinearSweep(num_samples=args['num_samples'])
-elif args['model'] == 'hill':
-    sweep_obj = sweep.HillSweep(num_samples=args['num_samples'])
-elif args['model'] == 'twostate':
-    sweep_obj = sweep.TwoStateSweep(num_samples=args['num_samples'])
+if model == 'linear':
+    sweep = LinearSweep(num_samples=num_samples)
+elif model == 'hill':
+    sweep = HillSweep(num_samples=num_samples)
+elif model == 'twostate':
+    sweep = TwoStateSweep(num_samples=num_samples)
 else:
-    raise ValueError('{:s} model type not recognized.'.format(args['model']))
+    raise ValueError('{:s} model type not recognized.'.format(model))
 
 # build sweep
-sweep_obj.build(
+sweep.build(
     directory=args['path'],
     batch_size=args['batch_size'],
-    num_trajectories=args['num_trajectories'],
-    saveall=args['saveall'],
-    deviations=args['deviations'],
+    num_trajectories=args['number_of_trajectories'],
+    saveall=args['save_all'],
+    deviations=args['use_deviations'],
     allocation=args['allocation'])

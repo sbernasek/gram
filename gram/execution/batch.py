@@ -108,9 +108,6 @@ class Batch:
         # move to batch directory
         job_script.write('cd {:s} \n\n'.format(path))
 
-        # begin outer script for processing batch
-        # job_script.write('while IFS=$\'\\t\' read P\n')
-
         # run each batch
         job_script.write('echo "Starting all batches at `date`"\n')
         job_script.write('while read P; do\n')
@@ -130,9 +127,9 @@ class Batch:
 
     @staticmethod
     def build_submission_script(path,
-                                num_trajectories,
-                                saveall,
-                                deviations,
+                                num_trajectories=5000,
+                                saveall=False,
+                                deviations=False,
                                 allocation='p30653'):
         """
         Writes job submission script for QUEST.
@@ -179,8 +176,8 @@ class Batch:
         job_script.write('#MSUB -l walltime=04:00:00 \n')
         job_script.write('#MSUB -m abe \n')
         #job_script.write('#MSUB -M sebastian@u.northwestern.edu \n')
-        job_script.write('#MSUB -o ./log/outlog \n')
-        job_script.write('#MSUB -e ./log/errlog \n')
+        job_script.write('#MSUB -o ./log/$(basename ${P})/out \n')
+        job_script.write('#MSUB -e ./log/$(basename ${P})/err \n')
         job_script.write('#MSUB -N $(basename ${P}) \n')
         job_script.write('#MSUB -l nodes=1:ppn=1 \n')
         job_script.write('#MSUB -l mem=1gb \n\n')
@@ -212,7 +209,7 @@ class Batch:
         # change the permissions
         chmod(job_script_path, 0o755)
 
-    def build_path_files(self, batch_size=25):
+    def build_batches(self, batch_size=25):
         """
         Creates directory and writes simulation paths for each batch.
 
@@ -222,8 +219,9 @@ class Batch:
 
         """
 
-        # get directory for all batches
+        # get directories for all batches and logs
         batches_dir = join(self.path, 'batches')
+        logs_dir = join(self.path, 'log')
 
         # create index file for batches
         index_path = join(batches_dir, 'index.txt')
@@ -235,11 +233,16 @@ class Batch:
             # determine batch ID
             batch_id = i // batch_size
 
-            # open batch file and append to index
+            # process new batch
             if i % batch_size == 0:
+
+                # open batch file and append to index
                 batch_path = join(batches_dir, '{:d}.txt'.format(batch_id))
                 index.write('{:s}\n'.format(relpath(batch_path, self.path)))
                 batch_file = open(batch_path, 'w')
+
+                # create log directory for batch
+                mkdir(join(logs_dir, '{:d}'.format(batch_id)))
 
             # write paths to batch file
             batch_file.write('{:s}\n'.format(simulation_path))
@@ -325,8 +328,8 @@ class Batch:
         with open(join(self.path, 'batch.pkl'), 'wb') as file:
             pickle.dump(self, file, protocol=-1)
 
-        # build parameter file
-        self.build_path_files(batch_size=batch_size)
+        # build parameter file for each batch
+        self.build_batches(batch_size=batch_size)
 
         # build job run script
         self.build_run_script(self.path,

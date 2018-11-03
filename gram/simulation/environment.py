@@ -22,6 +22,12 @@ class ConditionSimulation(PerturbationSimulation):
 
         saveall (bool) - if True, dynamics were saved
 
+        seed (int) - seed used for random number generator
+
+        runtime (float) - total runtime
+
+        complete (bool) - flag for completing a simulation
+
     Inherited Attributes:
 
         cell (Cell derivative)
@@ -81,6 +87,10 @@ class ConditionSimulation(PerturbationSimulation):
         self.dynamics = None
         self.comparisons = None
 
+        # initialize runtime and completion flag
+        self.runtime = -1
+        self.complete = False
+
         # set condition names
         self.condition_names = dict(normal='Normal',
                                   diabetic='Reduced Metabolism',
@@ -134,7 +144,7 @@ class ConditionSimulation(PerturbationSimulation):
         for condition in simulation.conditions:
 
             # check that directory exists
-            subdir = join(path, condition)
+            subdir = join(path, 'dynamics', condition)
             if not isdir(subdir):
                 continue
 
@@ -293,15 +303,22 @@ class ConditionSimulation(PerturbationSimulation):
 
         """
 
+        start_time = time()
+
         # generate seed for random number generator
         if 'seed' in skwargs.keys():
             seed = skwargs.pop('seed')
         else:
-            seed = int(time())
+            seed = int(start_time)
 
         # run simulation and comparison
         self.simulate(seed=seed, **skwargs)
         self.compare(**ckwargs)
+
+        # store seed and runtime
+        self.runtime = time() - start_time
+        self.seed = seed
+        self.complete = True
 
     def plot_comparison(self, trajectories=False, axes=None):
         """

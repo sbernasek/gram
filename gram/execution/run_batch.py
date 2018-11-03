@@ -1,50 +1,21 @@
-from os import getcwd
-from os.path import join
-from argparse import ArgumentParser
-
+from time import time
 from gram.simulation.environment import ConditionSimulation
+from gram.execution.arguments import RunArguments
 
 
 # ======================== PARSE SCRIPT ARGUMENTS =============================
 
-parser = ArgumentParser(description='Run a batch of simulations.')
+args = RunArguments(description='Simulation arguments.')
+skwargs = dict(N=args['number_of_trajectories'])
+ckwargs = dict(deviations=args['use_deviations'])
 
-# batch file
-parser.add_argument('path',
-                    nargs=1)
-
-# save simulation trajectories
-parser.add_argument('-S', '--saveall',
-                    help='Save simulation trajectories.',
-                    type=int,
-                    default=0,
-                    required=False)
-
-# number of trajectories
-parser.add_argument('-N', '--trajectories',
-                    help='Number of stochastic simulations.',
-                    type=int,
-                    default=1000,
-                    required=False)
-
-# number of trajectories
-parser.add_argument('-D', '--deviations',
-                    help='Use deviation variables.',
-                    type=int,
-                    default=False,
-                    required=False)
-
-args = vars(parser.parse_args())
 
 # ============================= RUN SCRIPT ====================================
 
-# define simulation arguments
-skwargs = dict(N=args['trajectories'])
-ckwargs = dict(deviations=bool(args['deviations']))
-saveall = bool(args['saveall'])
+start_time = time()
 
 # run each simulation in batch file
-with open(args['path'][0], 'r') as batch_file:
+with open(args['path'], 'r') as batch_file:
 
      # run each simulation
      for path in batch_file.readlines():
@@ -56,4 +27,9 @@ with open(args['path'][0], 'r') as batch_file:
           simulation.run(skwargs=skwargs, ckwargs=ckwargs)
 
           # save simulation
-          simulation.save(path.strip(), saveall=saveall)
+          simulation.save(path.strip(), saveall=args['save_all'])
+
+# print runtime to standard out
+runtime = time() - start_time
+print('\n\nBATCH COMPLETE.')
+print('RUNTIME: {:0.2f}\n\n'.format(runtime))

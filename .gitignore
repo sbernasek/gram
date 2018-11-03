@@ -1,3 +1,4 @@
+testing/
 build/
 dist/*.egg
 test/
