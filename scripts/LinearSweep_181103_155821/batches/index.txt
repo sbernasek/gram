@@ -1,4 +1,0 @@
-batches/0.txt
-batches/1.txt
-batches/2.txt
-batches/3.txt

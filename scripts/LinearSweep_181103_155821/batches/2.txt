@@ -1,3 +1,0 @@
-simulations/6
-simulations/7
-simulations/8
