@@ -176,11 +176,11 @@ class Batch:
         job_script.write('#! /bin/bash\n')
         job_script.write('#MSUB -A {:s} \n'.format(allocation))
         job_script.write('#MSUB -q short \n')
-        job_script.write('#MSUB -l walltime=04:00:00 \n')
+        job_script.write('#MSUB -l walltime=02:00:00 \n')
         job_script.write('#MSUB -m abe \n')
         #job_script.write('#MSUB -M sebastian@u.northwestern.edu \n')
-        job_script.write('#MSUB -o ${P%%.*}/outlog \n')
-        job_script.write('#MSUB -e ${P%%.*}/errlog \n')
+        job_script.write('#MSUB -o log/$(basename ${P})/outlog \n')
+        job_script.write('#MSUB -e log/$(basename ${P})/errlog \n')
         job_script.write('#MSUB -N $(basename ${P}) \n')
         job_script.write('#MSUB -l nodes=1:ppn=1 \n')
         job_script.write('#MSUB -l mem=1gb \n\n')
@@ -277,6 +277,7 @@ class Batch:
         mkdir(join(path, 'scripts'))
         mkdir(join(path, 'simulations'))
         mkdir(join(path, 'batches'))
+        mkdir(join(path, 'log'))
 
     def build(self,
               directory='./',
