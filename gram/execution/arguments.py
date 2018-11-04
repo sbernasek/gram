@@ -110,3 +110,71 @@ class SweepArguments(RunArguments):
                               default='p30653',
                               required=False)
 
+
+class PulseArguments(RunArguments):
+     """ Argument parser for pulse simulation. """
+
+     def add_arguments(self):
+          """ Add arguments for pulse simulation. """
+
+          # add position argument for path
+          self.add_argument(
+               'path',
+               nargs='?',
+               default=getcwd())
+
+          # add keyword argument for pulse start time
+          self.add_argument(
+               '-ps', '--pulse_start',
+               help='Pulse start time.',
+               type=float,
+               default=10.,
+               required=False)
+
+          # add keyword argument for pulse duration
+          self.add_argument(
+               '-pd', '--pulse_duration',
+               help='Pulse duration.',
+               type=float,
+               default=3.,
+               required=False)
+
+          # add keyword argument for pulse baseline
+          self.add_argument(
+               '-pb', '--pulse_baseline',
+               help='Pulse baseline.',
+               type=float,
+               default=0.,
+               required=False)
+
+          # add keyword argument for pulse magnitude
+          self.add_argument(
+               '-pm', '--pulse_magnitude',
+               help='Pulse magnitude.',
+               type=float,
+               default=1.,
+               required=False)
+
+          # add keyword argument for scaling pulse duration with conditions
+          self.add_argument(
+               '-PS', '--pulse_sensitive',
+               help='Scale pulse duration with environmental conditions.',
+               type=str2bool,
+               default=False,
+               required=False)
+
+          # add keyword argument for pulse magnitude
+          self.add_argument(
+               '-d', '--simulation_duration',
+               help='Simulation duration.',
+               type=float,
+               default=100.,
+               required=False)
+
+          # add keyword argument for number of simulated trajectories
+          self.add_argument(
+               '-N', '--number_of_trajectories',
+               help='Pulse start time.',
+               type=int,
+               default=1,
+               required=False)

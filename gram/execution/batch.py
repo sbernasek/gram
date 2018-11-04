@@ -97,9 +97,9 @@ class Batch:
         job_script_path = join(path, 'scripts', 'run.sh')
 
         # copy run script to scripts directory
-        run_path = abspath(__file__).rsplit('/', maxsplit=1)[0]
-        run_path = join(run_path, 'run_batch.py')
-        shutil.copy(run_path, join(path, 'scripts'))
+        run_script = abspath(__file__).rsplit('/', maxsplit=2)[0]
+        run_script = join(run_script, 'scripts', 'run_batch.py')
+        shutil.copy(run_script, join(path, 'scripts'))
 
         # declare outer script that reads PATH from file
         job_script = open(job_script_path, 'w')
@@ -156,9 +156,9 @@ class Batch:
         job_script_path = join(path, 'scripts', 'submit.sh')
 
         # copy run script to scripts directory
-        run_path = abspath(__file__).rsplit('/', maxsplit=1)[0]
-        run_path = join(run_path, 'run_batch.py')
-        shutil.copy(run_path, join(path, 'scripts'))
+        run_script = abspath(__file__).rsplit('/', maxsplit=2)[0]
+        run_script = join(run_script, 'scripts', 'run_batch.py')
+        shutil.copy(run_script, join(path, 'scripts'))
 
         # determine queue
         if walltime <= 4:
