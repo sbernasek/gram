@@ -218,7 +218,12 @@ class ConditionSimulation(PerturbationSimulation):
         self.saveall = saveall
         super().save(join(path, 'simulation.pkl'))
 
-    def simulate(self, N=1000, conditions=None, seed=None, inplace=True):
+    def simulate(self,
+                 N=1000,
+                 conditions=None,
+                 seed=None,
+                 inplace=True,
+                 debug=False):
         """
         Run perturbation simulation for each environmental condition.
 
@@ -232,6 +237,8 @@ class ConditionSimulation(PerturbationSimulation):
 
             inplace (bool) - if True, store simulation trajectories
 
+            debug (bool) - if True, use debugging mode
+
         Returns:
 
             dynamics (dict) - {condition: (before, after)} pairs in which before and after are simulation trajectories stored as TimeSeries objects
@@ -244,9 +251,10 @@ class ConditionSimulation(PerturbationSimulation):
         self.conditions = conditions
 
         # run simulations
+        kwargs = dict(N=N, seed=seed, debug=debug)
         dynamics = OrderedDict()
         for condition in conditions:
-            before, after = super().simulate(condition, N, seed=seed)
+            before, after = super().simulate(condition, **kwargs)
             dynamics[condition] = (before, after)
 
         # set/return dynamics

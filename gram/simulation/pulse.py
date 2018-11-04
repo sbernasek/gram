@@ -6,6 +6,7 @@ import pickle
 from genessa.signals.signals import cSignal, cSquarePulse
 from genessa.solver.deterministic import DeterministicSimulation
 from genessa.solver.stochastic import MonteCarloSimulation
+from genessa.solver.debug import Debugger
 
 # internal imports
 from .parameters import signal_sensitivity
@@ -187,7 +188,13 @@ class PulseSimulation:
 
         return signal
 
-    def simulate(self, cell, signal, condition='normal', N=100, seed=None):
+    def simulate(self,
+                 cell,
+                 signal,
+                 condition='normal',
+                 N=100,
+                 seed=None,
+                 debug=False):
         """
         Run simulation under the specified conditions for a specified cell.
 
@@ -203,6 +210,8 @@ class PulseSimulation:
 
             seed (int) - seed for random number generator
 
+            debug (bool) - if True, use debugging mode
+
         Returns:
 
             timeseries (genessa TimeSeries)
@@ -212,8 +221,13 @@ class PulseSimulation:
         # use steady states as initial condition
         ic = self.evaluate_steady_state(cell, condition=condition)
 
-        # instantiate and run stochastic simulation
-        sim = MonteCarloSimulation(cell, condition, ic=ic, seed=seed)
+        # instantiate stochastic solver
+        if debug:
+            sim = Debugger(cell, condition, ic=ic, seed=seed)
+        else:
+            sim = MonteCarloSimulation(cell, condition, ic=ic, seed=seed)
+
+        # run stochastic simulation
         ts = sim.run(N=N,
                      signal=signal,
                      duration=self.simulation_duration,
