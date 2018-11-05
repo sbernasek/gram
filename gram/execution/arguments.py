@@ -124,13 +124,8 @@ class PulseArguments(RunArguments):
 
      def add_arguments(self):
           """ Add arguments for pulse simulation. """
-          super().add_arguments()
 
-          # add position argument for path
-          self.add_argument(
-               'path',
-               nargs='?',
-               default=getcwd())
+          super().add_arguments()
 
           # add keyword argument for pulse start time
           self.add_argument(
