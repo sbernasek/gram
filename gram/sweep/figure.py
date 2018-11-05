@@ -44,7 +44,7 @@ class SweepFigure:
 
     """
 
-    def __init__(self, parameters, response, labels=None, density=100):
+    def __init__(self, parameters, response, labels, base, delta):
         """
         Instantiate parameter sweep visualization.
 
@@ -56,15 +56,16 @@ class SweepFigure:
 
             labels (list of str) - labels for each parameter
 
-            density (int) - grid density
+            base (np.ndarray[float]) - mean log10 parameter values, length N
+
+            delta (np.ndarray[float]) - half-range of log10 parameter values
 
         """
         self.parameters = parameters
         self.response = response
-        self.labels=labels
-
-        # compile heatmaps
-        self.compile(density=density)
+        self.labels = labels
+        self.base = base
+        self.delta = delta
 
     @property
     def N(self):
@@ -356,6 +357,7 @@ class SweepFigure:
 
 
     def render(self,
+               density=100,
                show=True,
                labelsize=6,
                fig_kwargs={},
@@ -364,6 +366,8 @@ class SweepFigure:
         Render parameter sweep figure.
 
         Args:
+
+            density (int) - grid density
 
             show (bool) - if False, remove axes
 
@@ -374,6 +378,9 @@ class SweepFigure:
             heatmap_kwargs: keyword arguments for draw_heatmap
 
         """
+
+        # compile heatmaps
+        self.compile(density=density)
 
         # create figure
         fig, axes_dict = self.create_figure(self.P, **fig_kwargs)

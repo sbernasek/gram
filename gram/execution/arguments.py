@@ -75,50 +75,6 @@ class RunArguments(ArgumentParser):
           self.args = vars(self.parse_args())
 
 
-class SweepArguments(RunArguments):
-     """ Argument handler for parameter sweeps. """
-
-     def add_arguments(self):
-          """ Add arguments. """
-
-          super().add_arguments()
-
-          # add keyword argument for model used
-          self.add_argument('-m', '--model',
-                              help='Model type.',
-                              type=str,
-                              default='linear',
-                              required=False)
-
-          # add keyword argument for number of parameter samples
-          self.add_argument('-n', '--number_of_samples',
-                              help='Number of parameter samples.',
-                              type=int,
-                              default=10,
-                              required=False)
-
-          # add keyword argument for batch size
-          self.add_argument('-b', '--batch_size',
-                              help='Number of simulations per batch.',
-                              type=int,
-                              default=25,
-                              required=False)
-
-          # add keyword argument for project allocation
-          self.add_argument('-w', '--walltime',
-                              help='Estimated run time.',
-                              type=int,
-                              default=10,
-                              required=False)
-
-          # add keyword argument for project allocation
-          self.add_argument('-A', '--allocation',
-                              help='Project allocation.',
-                              type=str,
-                              default='p30653',
-                              required=False)
-
-
 class PulseArguments(RunArguments):
      """ Argument parser for pulse simulation. """
 
@@ -174,3 +130,47 @@ class PulseArguments(RunArguments):
                type=float,
                default=100.,
                required=False)
+
+
+class SweepArguments(PulseArguments):
+     """ Argument handler for parameter sweeps. """
+
+     def add_arguments(self):
+          """ Add arguments. """
+
+          super().add_arguments()
+
+          # add keyword argument for model used
+          self.add_argument('-m', '--model',
+                              help='Model type.',
+                              type=str,
+                              default='linear',
+                              required=False)
+
+          # add keyword argument for number of parameter samples
+          self.add_argument('-n', '--number_of_samples',
+                              help='Number of parameter samples.',
+                              type=int,
+                              default=10,
+                              required=False)
+
+          # add keyword argument for batch size
+          self.add_argument('-b', '--batch_size',
+                              help='Number of simulations per batch.',
+                              type=int,
+                              default=25,
+                              required=False)
+
+          # add keyword argument for project allocation
+          self.add_argument('-w', '--walltime',
+                              help='Estimated run time.',
+                              type=int,
+                              default=10,
+                              required=False)
+
+          # add keyword argument for project allocation
+          self.add_argument('-A', '--allocation',
+                              help='Project allocation.',
+                              type=str,
+                              default='p30653',
+                              required=False)

@@ -118,6 +118,8 @@ class Sweep(Batch):
         return SweepFigure(self.parameters,
                            self.df.loc[:, (condition, mode)],
                            labels=self.labels,
+                           base=self.base,
+                           delta=self.delta,
                            **kwargs)
 
 

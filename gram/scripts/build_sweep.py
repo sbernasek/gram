@@ -28,4 +28,10 @@ sweep.build(
     saveall=args['save_all'],
     deviations=args['use_deviations'],
     walltime=args['walltime'],
-    allocation=args['allocation'])
+    allocation=args['allocation'],
+    pulse_start=args['pulse_start'],
+    pulse_duration=args['pulse_duration'],
+    pulse_baseline=args['pulse_baseline'],
+    pulse_magnitude=args['pulse_magnitude'],
+    pulse_sensitive=args['pulse_sensitive'],
+    simulation_duration=args['simulation_duration'])
