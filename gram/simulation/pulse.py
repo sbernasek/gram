@@ -139,8 +139,9 @@ class PulseSimulation:
         # run ODE solver (ignoring divide by zero warning)
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", category=RuntimeWarning)
-            results = simulation.solve_ivp(signal=signal,
-                                           duration=2*self.simulation_duration)
+            results = simulation.solve_ivp(
+                signal=signal,
+                duration=2*self.simulation_duration)
 
         # take last timepoint as steady state
         ss = results.mean[:, -1]
