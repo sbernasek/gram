@@ -1,9 +1,19 @@
+from math import floor, log10
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mtick
 from matplotlib.gridspec import GridSpec
 from scipy.interpolate import griddata
 from ..figures.settings import *
+
+
+def fexp(f):
+    """ Returns exponent of a float <f>. """
+    return int(floor(log10(abs(f)))) if f != 0 else 0
+
+def fman(f):
+    """ Returns mantissa of a float <f>. """
+    return f/10**fexp(f)
 
 
 class SweepFigure:
@@ -74,7 +84,9 @@ class SweepFigure:
     @staticmethod
     def round(x, nchars):
         """ Rounds <x> to nearest value with an exponent of <nchars>. """
-        return 10**(round(np.log10(x)/nchars) * nchars)
+        #return 10**(round(np.log10(x)/nchars) * nchars)
+        mantissa, exponent = fman(x), fexp(x)
+        return round(mantissa, nchars) * (10**exponent)
 
     @staticmethod
     def normalize(values, bg=None):
@@ -239,13 +251,15 @@ class SweepFigure:
             axes_dict[ind] = (i, j)
         return fig, axes_dict
 
-    def format_axes(self, show=True):
+    def format_axes(self, show=True, labelsize=6):
         """
         Format axis.
 
         Args:
 
             show (bool) - if False, remove axes
+
+            labelsize (int) - tick label size
 
         """
 
@@ -266,8 +280,9 @@ class SweepFigure:
             i, j = self.axes_dict[ind]
 
             # log scale axes
-            ax.set_xscale('log')
-            ax.set_yscale('log')
+            ax.set_xscale('log', subsx=[])
+            ax.set_yscale('log', subsy=[])
+            ax.minorticks_off()
 
             # get bounds of sampled data
             xmin = self.round(np.min(self.parameters[:, j]), 3)
@@ -280,40 +295,79 @@ class SweepFigure:
 
             # label outermost y axes
             if j == 0:
-                yticks = np.logspace(round(np.log10(ymin), 1),
-                                     round(np.log10(ymax), 1), num=3, base=10)
-                #ax.set_yticks(yticks)
-                ax.get_yaxis().set_major_formatter(formatter)
 
+                # labels
+                # yticks = np.logspace(round(np.log10(ymin), 1),
+                #                      round(np.log10(ymax), 1), num=3, base=10)
+                # ax.set_yticks(yticks)
+                # ax.get_yaxis().set_major_formatter(formatter)
+
+                # log labels
+                yticks = np.logspace(round(np.log10(ymin), 1),
+                                     round(np.log10(ymax), 1), num=6, base=10)
+                ax.set_yticks(yticks)
+                yticklabels = np.round(np.log10(yticks), 1)
+                yticklabels = [None]+list(yticklabels[1:-1])+[None]
+                ax.set_yticklabels(yticklabels)
+                ax.yaxis.set_tick_params(labelsize=labelsize, pad=0, length=1)
+
+                # add y-axis label
                 if self.labels is not None:
-                    ax.set_ylabel(self.labels[i+1])
+                    fmt = lambda label: '${:s}$'.format(label)
+                    ax.set_ylabel(fmt(self.labels[i+1]))
+
             else:
                 ax.set_yticks([])
                 ax.set_yticklabels([])
+                #ax.yaxis.set_minor_locator(plt.FixedLocator([]))
 
             # label outermost x axes
             if i == self.P - 2:
-                xticks = np.logspace(round(np.log10(xmin), 1),
-                                     round(np.log10(xmax), 1), num=3, base=10)
-                #ax.set_xticks(xticks)
-                ax.get_xaxis().set_major_formatter(formatter)
 
+                # labels
+                # xticks = np.logspace(round(np.log10(xmin), 1),
+                #                      round(np.log10(xmax), 1), num=3, base=10)
+                # ax.set_xticks(xticks)
+                # ax.get_xaxis().set_major_formatter(formatter)
+
+                # loglabels
+                xticks = np.logspace(round(np.log10(xmin), 1),
+                                     round(np.log10(xmax), 1), num=6, base=10)
+                ax.set_xticks(xticks)
+                xticklabels = np.round(np.log10(xticks), 1)
+                xticklabels = [None] + list(xticklabels[1:-1]) + [None]
+                ax.set_xticklabels(xticklabels, rotation=45, ha='right')
+                #ax.xaxis.set_tick_params(rotation=45)
+                ax.xaxis.set_tick_params(labelsize=labelsize, pad=0, length=1)
+
+                # add x-axis label
                 if self.labels is not None:
-                    ax.set_xlabel(self.labels[j])
+                    fmt = lambda label: '${:s}$'.format(label)
+                    ax.set_xlabel(fmt(self.labels[j]))
 
                 for label in ax.xaxis.get_ticklabels():
                     label.set_horizontalalignment('center')
+
             else:
                 ax.set_xticks([])
                 ax.set_xticklabels([])
+                ax.xaxis.set_minor_locator(plt.FixedLocator([]))
+                #ax.spines['bottom'].set_linewidth(10)
 
-    def render(self, show=True, fig_kwargs={}, heatmap_kwargs={}):
+
+    def render(self,
+               show=True,
+               labelsize=6,
+               fig_kwargs={},
+               heatmap_kwargs={}):
         """
         Render parameter sweep figure.
 
         Args:
 
             show (bool) - if False, remove axes
+
+            labelsize (int) - tick label size
 
             fig_kwargs: keyword arguments for create_figure
 
@@ -332,4 +386,4 @@ class SweepFigure:
             self.draw_heatmap(ax, grid, colors, **heatmap_kwargs)
 
         # format axes
-        self.format_axes(show=show)
+        self.format_axes(show=show, labelsize=labelsize)

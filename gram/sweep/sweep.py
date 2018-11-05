@@ -1,10 +1,12 @@
 import numpy as np
+import pandas as pd
 
 from ..execution.batch import Batch
 from .sampling import LogSampler
 from ..models.linear import LinearModel
 from ..models.hill import HillModel
 from ..models.twostate import TwoStateModel
+from .figure import SweepFigure
 
 
 class Sweep(Batch):
@@ -16,6 +18,8 @@ class Sweep(Batch):
         base (np.ndarray[float]) - base parameter values
 
         delta (float or np.ndarray[float]) - log-deviations about base
+
+        labels (list of str) - labels for each parameter
 
     Inherited attributes:
 
@@ -35,7 +39,7 @@ class Sweep(Batch):
 
     """
 
-    def __init__(self, base, delta=0.5, num_samples=1000):
+    def __init__(self, base, delta=0.5, num_samples=1000, labels=None, pad=.1):
         """
         Instantiate parameter sweep.
 
@@ -47,38 +51,74 @@ class Sweep(Batch):
 
             num_samples (int) - number of samples in parameter space
 
+            labels (list of str) - labels for each parameter
+
+            pad (float) - extra padding added to delta
+
         """
 
         self.base = base
         self.delta = delta
+        self.pad = pad
+        self.labels = labels
 
         # sample parameter space
-        sampler = LogSampler(base-delta, base+delta)
+        sampler = LogSampler(base-delta-pad, base+delta+pad)
         parameters = sampler.sample(num_samples)
 
         # instantiate batch job
         super().__init__(parameters=parameters)
 
-    # def aggregate(self):
-    #     """
-    #     Aggregate results from each simulation.
-    #     """
+    @staticmethod
+    def parse_simulation(simulation):
+        """ Returns over, under, and total error from <simulation>. """
+        if simulation.comparisons is None:
+            return False
+        else:
+            errors = {}
+            for condition, comparison in simulation.comparisons.items():
+                errors[(condition, 'above')] = comparison.above
+                errors[(condition, 'below')] = comparison.below
+                errors[(condition, 'error')] = comparison.error
+            return errors
 
-    #     sim.comparisons
+    def aggregate(self):
+        """ Aggregate results from each completed simulation. """
 
+        # parse simulation results
+        results = [self.parse_simulation(sim) for sim in self]
+        error_dicts = [x for x in results if x != False]
+        self.incomplete = sum([x for x in results if x == False])/self.N
 
-    #     def get_error(sim):
+        # compile results dataframe
+        self.df = pd.DataFrame.from_dict(error_dicts, orient='columns')
+        self.df.columns = pd.MultiIndex.from_tuples(self.df.columns)
 
-    #         sim.comparisons
+    def slice_by_mode(self, mode='error'):
+        """ Returns all results for a specified <mode>. """
+        return self.df.swaplevel(axis=1)[mode]
 
+    def slice_by_condition(self, condition='normal'):
+        """ Returns all results for a specified <condition>. """
+        return self.df[condition]
 
+    def build_figure(self, condition='normal', mode='error', **kwargs):
+        """
+        Returns parameter sweep visualization.
 
+        Args:
 
-    #     comparisons[condition] = comparison
+            condition (str) - environmental condition
 
+            mode (str) - comparison metric
 
+            kwargs: keyword arguments for SweepFigure
 
-    #     self.apply(func)
+        """
+        return SweepFigure(self.parameters,
+                           self.df.loc[:, (condition, mode)],
+                           labels=self.labels,
+                           **kwargs)
 
 
 class LinearSweep(Sweep):
@@ -116,8 +156,13 @@ class LinearSweep(Sweep):
         if base is None:
             base = np.array([0, 0, 0, 0, -2, -3, -4, -4, -4])
 
+        # define parameter labels
+        labels = ('k_0', 'k_1', 'k_2',
+                  '\gamma_0', '\gamma_1', '\gamma_2',
+                  '\eta_0', '\eta_1', '\eta_2')
+
         # call parent instantiation
-        super().__init__(base, delta, num_samples)
+        super().__init__(base, delta, num_samples, labels=labels)
 
     @staticmethod
     def build_model(parameters):
@@ -182,8 +227,14 @@ class HillSweep(Sweep):
         if base is None:
             base = np.array([0, 0, 0, -2, -3, 4, 0, -5, -4])
 
+        # define parameter labels
+        labels = ('H', 'k_R', 'k_P',
+                  '\gamma_R', '\gamma_P',
+                  'K_r', 'H_r',
+                  '\eta_R', '\eta_P')
+
         # call parent instantiation
-        super().__init__(base, delta, num_samples)
+        super().__init__(base, delta, num_samples, labels=labels)
 
     @staticmethod
     def build_model(parameters):
@@ -248,8 +299,13 @@ class TwoStateSweep(Sweep):
         if base is None:
             base = np.array([0, 0, 0, -1, -2, -3, -4, -4.5, -4])
 
+        # define parameter labels
+        labels = ('k_G', 'k_R', 'k_P',
+                  '\gamma_G', '\gamma_R', '\gamma_P',
+                  '\eta_G', '\eta_R', '\eta_P')
+
         # call parent instantiation
-        super().__init__(base, delta, num_samples)
+        super().__init__(base, delta, num_samples, labels=labels)
 
     @staticmethod
     def build_model(parameters):
