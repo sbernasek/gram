@@ -238,7 +238,11 @@ class PulseSimulation:
 
         return ts
 
-    def run(self, condition='normal', N=100, seed=None):
+    def run(self,
+            condition='normal',
+            N=100,
+            seed=None,
+            debug=False):
         """
         Run simulation under the specified conditions.
 
@@ -250,6 +254,8 @@ class PulseSimulation:
 
             seed (int) - seed for random number generator
 
+            debug (bool) - if True, use debugging mode
+
         Returns:
 
             timeseries (genessa TimeSeries)
@@ -259,4 +265,12 @@ class PulseSimulation:
         # instantiate input signal
         signal = self.build_signal(condition)
 
-        return self.simulate(self.cell, signal, condition=condition, N=N, seed=seed)
+        ts = self.simulate(
+            self.cell,
+            signal,
+            condition=condition,
+            N=N,
+            seed=seed,
+            debug=debug)
+
+        return ts

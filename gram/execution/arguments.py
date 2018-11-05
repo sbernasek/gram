@@ -48,7 +48,7 @@ class RunArguments(ArgumentParser):
 
           # add keyword argument for using deviation variables
           self.add_argument(
-               '-D', '--use_deviations',
+               '-d', '--use_deviations',
                help='Use deviation variables.',
                type=str2bool,
                default=False,
@@ -58,6 +58,14 @@ class RunArguments(ArgumentParser):
           self.add_argument(
                '-S', '--save_all',
                help='Save simulation trajectories.',
+               type=str2bool,
+               default=False,
+               required=False)
+
+          # add keyword argument for debug mode
+          self.add_argument(
+               '-D', '--debug',
+               help='Debug mode.',
                type=str2bool,
                default=False,
                required=False)

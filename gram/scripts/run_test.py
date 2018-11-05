@@ -32,7 +32,8 @@ simulation = PulseSimulation(cell, **simulation_kwargs)
 # run simulation
 simulation.run(condition='normal',
                N=args['number_of_trajectories'],
-               seed=seed)
+               seed=seed,
+               debug=args['debug'])
 
 # print runtime to standard out
 runtime = time() - start_time
