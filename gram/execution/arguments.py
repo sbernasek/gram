@@ -56,7 +56,7 @@ class RunArguments(ArgumentParser):
 
           # add keyword argument for saving simulated trajectories
           self.add_argument(
-               '-S', '--save_all',
+               '-s', '--save_all',
                help='Save simulation trajectories.',
                type=str2bool,
                default=False,
@@ -124,6 +124,7 @@ class PulseArguments(RunArguments):
 
      def add_arguments(self):
           """ Add arguments for pulse simulation. """
+          super().add_arguments()
 
           # add position argument for path
           self.add_argument(
@@ -173,16 +174,8 @@ class PulseArguments(RunArguments):
 
           # add keyword argument for pulse magnitude
           self.add_argument(
-               '-d', '--simulation_duration',
+               '-sd', '--simulation_duration',
                help='Simulation duration.',
                type=float,
                default=100.,
-               required=False)
-
-          # add keyword argument for number of simulated trajectories
-          self.add_argument(
-               '-N', '--number_of_trajectories',
-               help='Pulse start time.',
-               type=int,
-               default=1,
                required=False)
