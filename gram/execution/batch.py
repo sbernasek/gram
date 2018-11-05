@@ -348,9 +348,9 @@ class Batch:
 
         # build job run script
         self.build_run_script(self.path,
-                                     num_trajectories,
-                                     saveall,
-                                     deviations)
+                             num_trajectories,
+                             saveall,
+                             deviations)
 
         # build job submission script
         self.build_submission_script(self.path,

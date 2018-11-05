@@ -65,8 +65,8 @@ class Comparison:
 
         # store simulation trajectories
         if deviations:
-            reference = reference.get_deviations()
-            compared = compared.get_deviations()
+            reference = reference.get_deviations(values='final')
+            compared = compared.get_deviations(values='final')
         self.reference = reference
         self.compared = compared
 

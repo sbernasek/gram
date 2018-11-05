@@ -290,7 +290,10 @@ class ConditionSimulation(PerturbationSimulation):
         # run comparisons
         comparisons = OrderedDict()
         for condition, dynamics in self.dynamics.items():
-            comparison = super().compare(*dynamics, mode, deviations, **kwargs)
+            comparison = super().compare(*dynamics,
+                                         mode=mode,
+                                         deviations=deviations,
+                                         **kwargs)
             comparisons[condition] = comparison
 
         # set/return dynamics

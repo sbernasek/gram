@@ -35,3 +35,10 @@ sweep.build(
     pulse_magnitude=args['pulse_magnitude'],
     pulse_sensitive=args['pulse_sensitive'],
     simulation_duration=args['simulation_duration'])
+
+"""
+
+# basal input
+python build_sweep.py -N 5000 -n 2500 -b 25 -s 0 -w 10 -pb 0.1 -ps 50 -sd 250 -d true
+
+"""
