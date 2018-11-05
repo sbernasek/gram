@@ -170,8 +170,8 @@ class ConditionSimulation(PerturbationSimulation):
 
             # transform to deviations
             if comparison.deviations:
-                before = before.get_deviations()
-                after = after.get_deviations()
+                before = before.get_deviations(values='final')
+                after = after.get_deviations(values='final')
 
             # if comparison uses a different type, cast the timeseries
             if comparison.tstype != TimeSeries:
