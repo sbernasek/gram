@@ -25,5 +25,4 @@ simulation.save(path, saveall=args['save_all'])
 
 # print runtime to standard out
 runtime = time() - start_time
-print('\nSIMULATION COMPLETE.')
-print('RUNTIME: {:0.2f}\n\n'.format(runtime))
+print('\nSIMULATION COMPLETED IN {:0.2f}.\n'.format(runtime))
