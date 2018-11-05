@@ -114,7 +114,7 @@ class Batch:
         job_script.write('echo "Processing batch ${P}"\n')
         job_script.write('python ./scripts/run_batch.py ${P}')
         args = (num_trajectories, saveall, deviations)
-        job_script.write(' -N {:d} -S {:d} -D {:d}\n'.format(*args))
+        job_script.write(' -N {:d} -s {:d} -d {:d}\n'.format(*args))
         job_script.write('done < ./batches/index.txt \n')
         job_script.write('echo "Completed all batches at `date`"\n')
         job_script.write('exit\n')
@@ -204,7 +204,7 @@ class Batch:
         # run script
         job_script.write('python ./scripts/run_batch.py ${P}')
         args = (num_trajectories, saveall, deviations)
-        job_script.write(' -N {:d} -S {:d} -D {:d}\n'.format(*args))
+        job_script.write(' -N {:d} -s {:d} -d {:d}\n'.format(*args))
         job_script.write('EOJ\n')
         job_script.write('`\n\n')
         # ============= end submission script for individual batch ============
