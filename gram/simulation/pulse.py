@@ -223,6 +223,7 @@ class PulseSimulation:
 
         # instantiate stochastic solver
         if debug:
+            print('RUNNING SIMULATION IN DEBUG MODE.')
             sim = Debugger(cell, condition, ic=ic, seed=seed)
         else:
             sim = MonteCarloSimulation(cell, condition, ic=ic, seed=seed)
