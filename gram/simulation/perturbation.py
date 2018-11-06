@@ -100,8 +100,13 @@ class PerturbationSimulation(PulseSimulation):
 
         return before, after
 
-    @staticmethod
-    def compare(reference, compared, mode=None, deviations=False, **kwargs):
+    def compare(self,
+                reference,
+                compared,
+                mode=None,
+                horizon=100,
+                deviations=False,
+                **kwargs):
         """
         Compare simulation trajectories between two conditions.
 
@@ -117,6 +122,8 @@ class PerturbationSimulation(PulseSimulation):
                 cdf: fraction of gaussian model below/above reference
                 threshold: fraction of gaussian model above threshold
 
+            horizon (float) - duration of comparison
+
             deviations (bool) - if True, compare deviations from initial value
 
             kwargs: keyword arguments for comparison
@@ -127,13 +134,25 @@ class PerturbationSimulation(PulseSimulation):
 
         """
 
+        # convert timeseires to deviation values
+        if deviations:
+            reference = reference.get_deviations(values='final')
+            compared = compared.get_deviations(values='final')
+
+        # crop timeseries
+        start = self.pulse_start  / self.timescale
+        stop = start + horizon
+        reference = reference.crop(start, stop)
+        compared = compared.crop(start, stop)
+
+        # evaluate comparison
         if mode == 'empirical' or mode is None:
-            comparison = Comparison(reference, compared, deviations, **kwargs)
+            comparison = Comparison(reference, compared, **kwargs)
         elif mode == 'area':
-            comparison = AreaComparison(reference, compared, deviations, **kwargs)
+            comparison = AreaComparison(reference, compared, **kwargs)
         elif mode == 'cdf':
-            comparison = CDFComparison(reference, compared, deviations, **kwargs)
+            comparison = CDFComparison(reference, compared, **kwargs)
         elif mode == 'threshold':
-            comparison = ThresholdComparison(reference, compared, deviations, **kwargs)
+            comparison = ThresholdComparison(reference, compared, **kwargs)
 
         return comparison

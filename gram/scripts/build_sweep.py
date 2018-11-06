@@ -26,6 +26,7 @@ sweep.build(
     batch_size=args['batch_size'],
     num_trajectories=args['number_of_trajectories'],
     saveall=args['save_all'],
+    horizon=args['horizon'],
     deviations=args['use_deviations'],
     walltime=args['walltime'],
     allocation=args['allocation'],

@@ -21,8 +21,6 @@ class Comparison:
 
         compared (TimeSeries) - timeseries to be compared
 
-        deviations (bool) - if True, compare deviations from initial value
-
         dim (int) - state space dimension to be compared
 
         below (float) - fraction of confidence band below the reference
@@ -47,7 +45,7 @@ class Comparison:
 
     """
 
-    def __init__(self, reference, compared, deviations=False, dim=-1):
+    def __init__(self, reference, compared, dim=-1):
         """
         Instantiate timeseries comparison object.
 
@@ -57,23 +55,17 @@ class Comparison:
 
             compared (TimeSeries) - timeseries to be compared
 
-            deviations (bool) - if True, compare deviations from initial value
-
             dim (int) - state space dimension to be compared
 
         """
 
         # store simulation trajectories
-        if deviations:
-            reference = reference.get_deviations(values='final')
-            compared = compared.get_deviations(values='final')
         self.reference = reference
         self.compared = compared
 
         # store attributes
         self.dim = dim
         self.tstype = self.reference.__class__
-        self.deviations = deviations
 
         # evaluate comparison metric
         below, above = self.evaluate()
@@ -147,7 +139,8 @@ class Comparison:
         """
 
         # determine start index (pulse onset)
-        ind = self.reference.mean[self.dim].nonzero()[0][0] + 1
+        #ind = self.reference.mean[self.dim].nonzero()[0][0] + 1
+        ind = 0
 
         # evalaute fractions below/above confidence band
         t = self.t[ind:] - self.t[ind]
@@ -359,8 +352,6 @@ class AreaComparison(Comparison):
 
         compared (TimeSeries) - timeseries to be compared
 
-        deviations (bool) - if True, compare deviations from initial value
-
         dim (int) - state space dimension to be compared
 
         below (float) - fraction of confidence band below the reference
@@ -373,7 +364,7 @@ class AreaComparison(Comparison):
 
     """
 
-    def __init__(self, reference, compared, deviations=False, dim=-1):
+    def __init__(self, reference, compared, dim=-1):
         """
         Instantiate timeseries comparison object.
 
@@ -383,14 +374,12 @@ class AreaComparison(Comparison):
 
             compared (TimeSeries) - timeseries to be compared
 
-            deviations (bool) - if True, compare deviations from initial value
-
             dim (int) - state space dimension to be compared
 
         """
 
         # call parent instantiation (runs evaluation)
-        super().__init__(reference, compared, deviations=deviations, dim=dim)
+        super().__init__(reference, compared, dim=dim)
 
     def evaluate(self):
         """
@@ -440,8 +429,6 @@ class CDFComparison(Comparison):
 
     Inherited Attributes:
 
-        deviations (bool) - if True, compare deviations from initial value
-
         dim (int) - state space dimension to be compared
 
         below (float) - fraction of confidence band below the reference
@@ -469,7 +456,6 @@ class CDFComparison(Comparison):
     def __init__(self,
                  reference,
                  compared,
-                 deviations=False,
                  bandwidth=.98,
                  dim=-1):
         """
@@ -480,8 +466,6 @@ class CDFComparison(Comparison):
             reference (TimeSeries) - reference timeseries
 
             compared (TimeSeries) - timeseries to be compared
-
-            deviations (bool) - if True, compare deviations from initial value
 
             bandwidth (float) - width of confidence band, 0 to 1
 
@@ -494,7 +478,7 @@ class CDFComparison(Comparison):
         compared = GaussianModel.from_timeseries(compared, bandwidth)
 
         # call parent instantiation (runs evaluation)
-        super().__init__(reference, compared, deviations=deviations, dim=dim)
+        super().__init__(reference, compared, dim=dim)
 
         # store timeseries kwargs
         self.tskwargs = dict(bandwidth=bandwidth)
@@ -519,8 +503,6 @@ class ThresholdComparison(CDFComparison):
         reference (GaussianModel) - reference timeseries
 
         compared (GaussianModel) - timeseries to be compared
-
-        deviations (bool) - if True, compare deviations from initial value
 
         dim (int) - state space dimension to be compared
 
@@ -547,7 +529,6 @@ class ThresholdComparison(CDFComparison):
     def __init__(self,
         reference,
         compared,
-        deviations=False,
         fraction_of_max=0.3,
         bandwidth=.98,
         dim=-1):
@@ -559,8 +540,6 @@ class ThresholdComparison(CDFComparison):
             reference (TimeSeries) - reference timeseries
 
             compared (TimeSeries) - timeseries to be compared
-
-            deviations (bool) - if True, compare deviations from initial value
 
             fraction_of_max (float) - fraction of peak mean reference value used as threshold
 
@@ -574,17 +553,11 @@ class ThresholdComparison(CDFComparison):
         self.dim = dim
         self.fraction_of_max = fraction_of_max
 
-        # transform to deviations
-        if deviations:
-            reference = reference.get_deviations()
-            compared = compared.get_deviations()
-
         # fit gaussian models to timeseries
         self.reference = GaussianModel.from_timeseries(reference, bandwidth)
         self.compared = GaussianModel.from_timeseries(compared, bandwidth)
 
         # store timeseries type
-        self.deviations = deviations
         self.tstype = self.reference.__class__
         self.tskwargs = dict(bandwidth=bandwidth)
 

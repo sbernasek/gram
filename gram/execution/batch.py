@@ -76,6 +76,7 @@ class Batch:
     def build_run_script(path,
                         num_trajectories,
                         saveall,
+                        horizon,
                         deviations):
         """
         Writes bash run script for local use.
@@ -87,6 +88,8 @@ class Batch:
             num_trajectories (int) - number of simulation trajectories
 
             saveall (bool) - if True, save simulation trajectories
+
+            horizon (float) - duration of comparison
 
             deviations (bool) - if True, use deviation variables
 
@@ -112,9 +115,9 @@ class Batch:
         job_script.write('echo "Starting all batches at `date`"\n')
         job_script.write('while read P; do\n')
         job_script.write('echo "Processing batch ${P}"\n')
-        job_script.write('python ./scripts/run_batch.py ${P}')
-        args = (num_trajectories, saveall, deviations)
-        job_script.write(' -N {:d} -s {:d} -d {:d}\n'.format(*args))
+        job_script.write('python ./scripts/run_batch.py ${P} ')
+        args = (num_trajectories, saveall, horizon, deviations)
+        job_script.write('-N {:d} -s {:d} -ch {:0.2f} -d {:d}\n'.format(*args))
         job_script.write('done < ./batches/index.txt \n')
         job_script.write('echo "Completed all batches at `date`"\n')
         job_script.write('exit\n')
@@ -129,6 +132,7 @@ class Batch:
     def build_submission_script(path,
                                 num_trajectories=5000,
                                 saveall=False,
+                                horizon=100,
                                 deviations=False,
                                 walltime=10,
                                 allocation='p30653'):
@@ -142,6 +146,8 @@ class Batch:
             num_trajectories (int) - number of simulation trajectories
 
             saveall (bool) - if True, save simulation trajectories
+
+            horizon (float) - duration of comparison
 
             deviations (bool) - if True, use deviation variables
 
@@ -202,9 +208,9 @@ class Batch:
         job_script.write('cd {:s} \n\n'.format(path))
 
         # run script
-        job_script.write('python ./scripts/run_batch.py ${P}')
-        args = (num_trajectories, saveall, deviations)
-        job_script.write(' -N {:d} -s {:d} -d {:d}\n'.format(*args))
+        job_script.write('python ./scripts/run_batch.py ${P} ')
+        args = (num_trajectories, saveall, horizon, deviations)
+        job_script.write('-N {:d} -s {:d} -ch {:0.2f} -d {:d}\n'.format(*args))
         job_script.write('EOJ\n')
         job_script.write('`\n\n')
         # ============= end submission script for individual batch ============
@@ -299,6 +305,7 @@ class Batch:
               batch_size=25,
               num_trajectories=5000,
               saveall=False,
+              horizon=100,
               deviations=False,
               walltime=10,
               allocation='p30653',
@@ -315,6 +322,8 @@ class Batch:
             num_trajectories (int) - number of simulation trajectories
 
             saveall (bool) - if True, save simulation trajectories
+
+            horizon (float) - duration of comparison
 
             deviations (bool) - if True, use deviation variables
 
@@ -350,12 +359,14 @@ class Batch:
         self.build_run_script(self.path,
                              num_trajectories,
                              saveall,
+                             horizon,
                              deviations)
 
         # build job submission script
         self.build_submission_script(self.path,
                                      num_trajectories,
                                      saveall,
+                                     horizon,
                                      deviations,
                                      walltime=walltime,
                                      allocation=allocation)

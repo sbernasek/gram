@@ -22,6 +22,10 @@ class ConditionSimulation(PerturbationSimulation):
 
         saveall (bool) - if True, dynamics were saved
 
+        horizon (float) - duration of comparison
+
+        deviations (bool) - if True, compare deviations from initial value
+
         seed (int) - seed used for random number generator
 
         runtime (float) - total runtime
@@ -86,6 +90,10 @@ class ConditionSimulation(PerturbationSimulation):
         self.conditions = []
         self.dynamics = None
         self.comparisons = None
+
+        # initialize comparison attributes
+        self.horizon = None
+        self.deviations = None
 
         # initialize runtime and completion flag
         self.runtime = -1
@@ -169,9 +177,16 @@ class ConditionSimulation(PerturbationSimulation):
             after = simulation.dynamics[condition][1]
 
             # transform to deviations
-            if comparison.deviations:
+            if simulation.deviations == True:
                 before = before.get_deviations(values='final')
                 after = after.get_deviations(values='final')
+
+            # crop timeseries
+            if simulation.horizon is not None:
+                start = simulation.pulse_start / simulation.timescale
+                stop = start + simulation.horizon
+                before = before.crop(start, stop)
+                after = after.crop(start, stop)
 
             # if comparison uses a different type, cast the timeseries
             if comparison.tstype != TimeSeries:
@@ -263,7 +278,12 @@ class ConditionSimulation(PerturbationSimulation):
         else:
             return dynamics
 
-    def compare(self, mode=None, deviations=False, inplace=True, **kwargs):
+    def compare(self,
+                mode=None,
+                horizon=100,
+                deviations=False,
+                inplace=True,
+                **kwargs):
         """
         Evaluate comparison for each environmental condition.
 
@@ -274,6 +294,8 @@ class ConditionSimulation(PerturbationSimulation):
                 area: fraction of confidence band area below/above reference
                 cdf: fraction of gaussian model below/above reference
                 threshold: fraction of gaussian model above threshold
+
+            horizon (float) - duration of comparison
 
             deviations (bool) - if True, compare deviations from initial value
 
@@ -287,17 +309,21 @@ class ConditionSimulation(PerturbationSimulation):
 
         """
 
+        # define keyword arguments for comparison
+        kw = dict(mode=mode, horizon=horizon, deviations=deviations, **kwargs)
+
         # run comparisons
         comparisons = OrderedDict()
-        for condition, dynamics in self.dynamics.items():
-            comparison = super().compare(*dynamics,
-                                         mode=mode,
-                                         deviations=deviations,
-                                         **kwargs)
+        for condition, (reference, compared) in self.dynamics.items():
+
+            # evaluate comparison
+            comparison = super().compare(reference, compared, **kw)
             comparisons[condition] = comparison
 
         # set/return dynamics
         if inplace:
+            self.horizon = horizon
+            self.deviations = deviations
             self.comparisons = comparisons
         else:
             return comparisons
@@ -365,3 +391,57 @@ class ConditionSimulation(PerturbationSimulation):
         axes[0].set_ylabel('Protein level')
 
         plt.tight_layout()
+
+    def plot_dynamics(self, dim=-1, trajectories=False, axes=None):
+        """
+        Visualize full expression dynamics for each environmental condition.
+
+        Args:
+
+            dim (int) - state space dimension to be visualized
+
+            trajectories (bool) - if True, plot individual trajectories
+
+            axes (tuple) - matplotlib.axes.AxesSubplot for each condition
+
+        """
+
+        # create axes if none were provided
+        if axes is None:
+            ncols = self.N
+            figsize=(ncols*2.5, 2)
+            fig, axes = plt.subplots(1, ncols, sharey=True, figsize=figsize)
+
+        # visualize comparison under each condition
+        for i, (condition, dynamics) in enumerate(self.dynamics.items()):
+            before, after = dynamics
+
+            # plot dynamics
+            if trajectories:
+                self.plot_trajectories(axes[i], before, dim, c='k')
+                self.plot_trajectories(axes[i], after, dim, c='r')
+            else:
+                self.plot_confidence_band(axes[i], before, dim, c='k')
+                self.plot_confidence_band(axes[i], after, dim, c='r')
+
+            # add plot title
+            axes[i].set_title(self.condition_names[condition])
+
+        axes[0].set_ylabel('Protein level')
+
+        plt.tight_layout()
+
+    @staticmethod
+    def plot_confidence_band(ax, timeseries, dim, c='k', alpha=0.2, line=True):
+        """ Plots confidence band for <dim> of <timeseries> on <ax>. """
+        lb, ub = timeseries.lower[dim], timeseries.upper[dim]
+        ax.fill_between(timeseries.t, lb, ub, color=c, alpha=alpha)
+        if line:
+            ax.plot(self.t, lb, '-k')
+            ax.plot(self.t, ub, '-k')
+
+    @staticmethod
+    def plot_trajectories(ax, timeseries, dim, c='k', alpha=0.2, lw=0.1):
+        """ Plots trajectories for <dim> of <timeseries> on <ax>. """
+        for trajectory in timeseries.states[:, dim, :]:
+            ax.plot(timeseries.t, trajectory, color=c, alpha=alpha, lw=lw)

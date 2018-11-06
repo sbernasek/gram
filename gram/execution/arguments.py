@@ -46,6 +46,14 @@ class RunArguments(ArgumentParser):
                default=1000,
                required=False)
 
+          # add keyword argument for comparison horizon
+          self.add_argument(
+               '-ch', '--horizon',
+               help='Duration of comparison.',
+               type=float,
+               default=100.,
+               required=False)
+
           # add keyword argument for using deviation variables
           self.add_argument(
                '-d', '--use_deviations',
