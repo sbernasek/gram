@@ -147,8 +147,18 @@ class PulseSimulation:
         ss = results.mean[:, -1]
 
         # if all states are zero at steady state, return steady state
-        if ss.max() == 0:
+        if np.all(ss==0):
             return ss
+
+        # if solver exploded, return zeros and file a warning
+        elif np.abs(ss).max() > 1e10:
+            warnings.warn('Solver did not converge.', UserWarning)
+            return np.zeros(ss.size, dtype=np.float64)
+
+        # if solver returned negative values, return zeros and file a warning
+        elif ss.min() < 0:
+            warnings.warn('Steady state is negative.', UserWarning)
+            return np.zeros(ss.size, dtype=np.float64)
 
         # otherwise ensure that maximum change is below specified tolerance
         else:
