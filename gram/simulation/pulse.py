@@ -39,12 +39,12 @@ class PulseSimulation:
     """
 
     def __init__(self, cell,
-                 pulse_start=10,
+                 pulse_start=100,
                  pulse_duration=3,
                  pulse_baseline=0,
                  pulse_magnitude=1,
                  pulse_sensitive=False,
-                 simulation_duration=100,
+                 simulation_duration=500,
                  dt=1,
                  timescale=60):
         """

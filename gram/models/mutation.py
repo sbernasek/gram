@@ -3,7 +3,7 @@ from copy import deepcopy
 
 class Mutation:
     """
-    Base class for gene regulatory network models that provides methods for generating mutant genotypes.
+    Base class for complex gene regulatory network models that provides methods for generating mutant genotypes.
     """
 
     @classmethod

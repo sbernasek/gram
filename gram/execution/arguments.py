@@ -43,7 +43,7 @@ class RunArguments(ArgumentParser):
                '-N', '--number_of_trajectories',
                help='Number of stochastic simulation trajectories.',
                type=int,
-               default=1000,
+               default=5000,
                required=False)
 
           # add keyword argument for comparison horizon
@@ -96,7 +96,7 @@ class PulseArguments(RunArguments):
                '-ps', '--pulse_start',
                help='Pulse start time.',
                type=float,
-               default=10.,
+               default=100.,
                required=False)
 
           # add keyword argument for pulse duration
@@ -136,7 +136,7 @@ class PulseArguments(RunArguments):
                '-sd', '--simulation_duration',
                help='Simulation duration.',
                type=float,
-               default=100.,
+               default=500.,
                required=False)
 
 
@@ -159,14 +159,14 @@ class SweepArguments(PulseArguments):
           self.add_argument('-n', '--number_of_samples',
                               help='Number of parameter samples.',
                               type=int,
-                              default=10,
+                              default=2500,
                               required=False)
 
           # add keyword argument for batch size
           self.add_argument('-b', '--batch_size',
                               help='Number of simulations per batch.',
                               type=int,
-                              default=25,
+                              default=50,
                               required=False)
 
           # add keyword argument for project allocation

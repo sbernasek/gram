@@ -6,6 +6,7 @@ from .sampling import LogSampler
 from ..models.linear import LinearModel
 from ..models.hill import HillModel
 from ..models.twostate import TwoStateModel
+from ..models.simple import SimpleModel
 from .figure import SweepFigure
 
 
@@ -121,6 +122,68 @@ class Sweep(Batch):
                            base=self.base,
                            delta=self.delta,
                            **kwargs)
+
+
+class SimpleSweep(Sweep):
+
+    """
+    Parameter sweep for simple model. Parameters are:
+
+        0: synthesis rate constant
+        1: decay rate constant
+        2: feedback strength
+
+    """
+
+    def __init__(self, base=None, delta=0.5, num_samples=2500):
+        """
+        Instantiate parameter sweep of a simple model.
+
+        Args:
+
+            base (np.ndarray[float]) - base parameter values
+
+            delta (float or np.ndarray[float]) - log-deviations about base
+
+            num_samples (int) - number of samples in parameter space
+
+        """
+
+        # define parameter ranges, log10(val)
+        if base is None:
+            base = np.array([0, -3, -3])
+
+        # define parameter labels
+        labels = ('k', '\gamma', '\eta')
+
+        # call parent instantiation
+        super().__init__(base, delta, num_samples, labels=labels)
+
+    @staticmethod
+    def build_model(parameters):
+        """
+        Returns a model instance defined by the provided parameters.
+
+        Args:
+
+            parameters (np.ndarray[float]) - model parameters
+
+        Returns:
+
+            model (LinearModel)
+
+        """
+
+        # extract parameters
+        k, g, eta = parameters
+
+        # instantiate base model
+        model = SimpleModel(k=k, g=g)
+
+        # add feedback (two equivalent sets)
+        model.add_feedback(eta, perturbed=True)
+
+        return model
 
 
 class LinearSweep(Sweep):

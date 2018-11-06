@@ -437,8 +437,8 @@ class ConditionSimulation(PerturbationSimulation):
         lb, ub = timeseries.lower[dim], timeseries.upper[dim]
         ax.fill_between(timeseries.t, lb, ub, color=c, alpha=alpha)
         if line:
-            ax.plot(self.t, lb, '-k')
-            ax.plot(self.t, ub, '-k')
+            ax.plot(timeseries.t, lb, '-k')
+            ax.plot(timeseries.t, ub, '-k')
 
     @staticmethod
     def plot_trajectories(ax, timeseries, dim, c='k', alpha=0.2, lw=0.1):

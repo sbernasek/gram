@@ -1,5 +1,5 @@
 from gram.execution.arguments import SweepArguments
-from gram.sweep.sweep import LinearSweep, HillSweep, TwoStateSweep
+from gram.sweep.sweep import LinearSweep, HillSweep, TwoStateSweep, SimpleSweep
 
 
 # ======================== PARSE SCRIPT ARGUMENTS =============================
@@ -11,7 +11,9 @@ num_samples = args['number_of_samples']
 # ============================= RUN SCRIPT ====================================
 
 # instantiate sweep object
-if model == 'linear':
+if model == 'simple':
+    sweep = SimpleSweep(num_samples=num_samples)
+elif model == 'linear':
     sweep = LinearSweep(num_samples=num_samples)
 elif model == 'hill':
     sweep = HillSweep(num_samples=num_samples)
