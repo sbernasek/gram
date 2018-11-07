@@ -112,7 +112,7 @@ class SweepFigure:
         return rescaled_values
 
     @classmethod
-    def interpolate(cls, x, y, z, density=100):
+    def interpolate(cls, x, y, z, density=100, xbounds=None, ybounds=None):
         """
         Interpolate data onto a regular 2D grid.
 
@@ -125,6 +125,10 @@ class SweepFigure:
             z (1D np.ndarray) - response values
 
             density (int) - grid density
+
+            xbounds (tuple) - (xmin, xmax) bounds for grid
+
+            ybounds (tuple) - (ymin, ymax) bounds for grid
 
         Returns:
 
@@ -140,10 +144,17 @@ class SweepFigure:
         z = z[np.isnan(z) == False]
 
         # define grid
-        xmin = round(np.log10(x.min()), 1)
-        xmax = round(np.log10(x.max()), 1)
-        ymin = round(np.log10(y.min()), 1)
-        ymax = round(np.log10(y.max()), 1)
+        if xbounds is None:
+            xmin = round(np.log10(x.min()), 1)
+            xmax = round(np.log10(x.max()), 1)
+        else:
+            xmin, xmax = xbounds
+
+        if ybounds is None:
+            ymin = round(np.log10(y.min()), 1)
+            ymax = round(np.log10(y.max()), 1)
+        else:
+            ymin, ymax = ybounds
 
         # create regular grid
         xi, yi = np.logspace(xmin, xmax, density), np.logspace(ymin, ymax, density)
@@ -157,6 +168,12 @@ class SweepFigure:
         zi = griddata((x_new, y_new), z, (xi_new, yi_new), method='linear')
 
         return (xi, yi), zi
+
+    def get_bounds(self, i, j):
+        """ Returns x/y bounds for row <i> col <j> """
+        base = self.base[[j, i+1]]
+        (xmin, ymin), (xmax, ymax) = base-self.delta, base+self.delta
+        return (xmin, xmax), (ymin, ymax)
 
     def compile(self, density=100):
         """
@@ -180,8 +197,14 @@ class SweepFigure:
                     y = self.parameters[:, i+1]
                     z = self.response
 
+                    # get bounds
+                    xbounds, ybounds = self.get_bounds(i, j)
+
                     # interpolate onto 2D grid
-                    grid, colors = self.interpolate(x, y, z, density=density)
+                    grid, colors = self.interpolate(x, y, z,
+                                                    density=density,
+                                                    xbounds=xbounds,
+                                                    ybounds=ybounds)
 
                     # store heatmap
                     self.heatmaps[(i, j)] = (grid, colors)
@@ -286,26 +309,12 @@ class SweepFigure:
             ax.minorticks_off()
 
             # get bounds of sampled data
-            xmin = self.round(np.min(self.parameters[:, j]), 3)
-            xmax = self.round(np.max(self.parameters[:, j]), 3)
-            ymin = self.round(np.min(self.parameters[:, i+1]), 3)
-            ymax = self.round(np.max(self.parameters[:, i+1]), 3)
-
-            # set bounds
-            #ax.set_xlim(xmin, xmax), ax.set_ylim(ymin, ymax)
+            xbounds, ybounds = self.get_bounds(i, j)
 
             # label outermost y axes
             if j == 0:
 
-                # labels
-                # yticks = np.logspace(round(np.log10(ymin), 1),
-                #                      round(np.log10(ymax), 1), num=3, base=10)
-                # ax.set_yticks(yticks)
-                # ax.get_yaxis().set_major_formatter(formatter)
-
-                # log labels
-                yticks = np.logspace(round(np.log10(ymin), 1),
-                                     round(np.log10(ymax), 1), num=6, base=10)
+                yticks = np.logspace(*ybounds, num=6, base=10)
                 ax.set_yticks(yticks)
                 yticklabels = np.round(np.log10(yticks), 1)
                 yticklabels = [None]+list(yticklabels[1:-1])+[None]
@@ -314,26 +323,18 @@ class SweepFigure:
 
                 # add y-axis label
                 if self.labels is not None:
-                    fmt = lambda label: '${:s}$'.format(label)
+                    prefix = r'$\log_{10}\ $'
+                    fmt = lambda label: prefix + '${:s}$'.format(label)
                     ax.set_ylabel(fmt(self.labels[i+1]))
 
             else:
                 ax.set_yticks([])
                 ax.set_yticklabels([])
-                #ax.yaxis.set_minor_locator(plt.FixedLocator([]))
 
             # label outermost x axes
             if i == self.P - 2:
 
-                # labels
-                # xticks = np.logspace(round(np.log10(xmin), 1),
-                #                      round(np.log10(xmax), 1), num=3, base=10)
-                # ax.set_xticks(xticks)
-                # ax.get_xaxis().set_major_formatter(formatter)
-
-                # loglabels
-                xticks = np.logspace(round(np.log10(xmin), 1),
-                                     round(np.log10(xmax), 1), num=6, base=10)
+                xticks = np.logspace(*xbounds, num=6, base=10)
                 ax.set_xticks(xticks)
                 xticklabels = np.round(np.log10(xticks), 1)
                 xticklabels = [None] + list(xticklabels[1:-1]) + [None]
@@ -343,7 +344,8 @@ class SweepFigure:
 
                 # add x-axis label
                 if self.labels is not None:
-                    fmt = lambda label: '${:s}$'.format(label)
+                    prefix = r'$\log_{10}\ $'
+                    fmt = lambda label: prefix + '${:s}$'.format(label)
                     ax.set_xlabel(fmt(self.labels[j]))
 
                 for label in ax.xaxis.get_ticklabels():
@@ -353,8 +355,6 @@ class SweepFigure:
                 ax.set_xticks([])
                 ax.set_xticklabels([])
                 ax.xaxis.set_minor_locator(plt.FixedLocator([]))
-                #ax.spines['bottom'].set_linewidth(10)
-
 
     def render(self,
                density=100,

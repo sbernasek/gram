@@ -1,8 +1,9 @@
 import numpy as np
 import pandas as pd
+from os.path import join, exists
 
 from ..execution.batch import Batch
-from .sampling import LogSampler
+from .sampling import LogSampler, LinearSampler
 from ..models.linear import LinearModel
 from ..models.hill import HillModel
 from ..models.twostate import TwoStateModel
@@ -22,9 +23,13 @@ class Sweep(Batch):
 
         labels (list of str) - labels for each parameter
 
+        results (pd.DataFrame) - results with (condition, mode) multiindex
+
     Inherited attributes:
 
         path (str) - path to batch directory
+
+        run_script (str) - path to script for running batch
 
         parameters (np.ndarray[float]) - sampled parameter values
 
@@ -32,15 +37,19 @@ class Sweep(Batch):
 
         sim_kw (dict) - keyword arguments for simulation
 
-        results (dict) - {simulation_id: results_dict} pairs
-
     Properties:
 
         N (int) - number of samples in parameter space
 
     """
 
-    def __init__(self, base, delta=0.5, num_samples=1000, labels=None, pad=.1):
+    def __init__(self,
+                 base,
+                 delta=0.5,
+                 num_samples=1000,
+                 labels=None,
+                 pad=.1,
+                 logbase=10):
         """
         Instantiate parameter sweep.
 
@@ -56,19 +65,42 @@ class Sweep(Batch):
 
             pad (float) - extra padding added to delta
 
+            logbase (float) - logarithmic basis for sampling
+
         """
 
         self.base = base
         self.delta = delta
         self.pad = pad
         self.labels = labels
+        self.results = None
 
         # sample parameter space
-        sampler = LogSampler(base-delta-pad, base+delta+pad)
+        sampler = LogSampler(base-delta-pad, base+delta+pad, base=logbase)
         parameters = sampler.sample(num_samples)
 
         # instantiate batch job
         super().__init__(parameters=parameters)
+
+    @staticmethod
+    def load(path):
+        """ Load sweep from target <path>. """
+
+        sweep = Batch.load(path)
+
+        # load results
+        if exists(join(path, 'data.hdf')):
+            sweep.results = pd.read_hdf(join(path, 'data.hdf'), 'results')
+            sweep.completed = pd.read_hdf(join(path, 'data.hdf'), 'completed')
+
+        return sweep
+
+    def save(self):
+        """ Save sweep data. """
+        if self.results is not None:
+            p = join(self.path, 'data.hdf')
+            self.results.to_hdf(p, 'results', mode='a')
+            self.completed.to_hdf(p, 'completed', mode='a')
 
     @staticmethod
     def parse_simulation(simulation):
@@ -83,41 +115,63 @@ class Sweep(Batch):
                 errors[(condition, 'error')] = comparison.error
             return errors
 
+    @property
+    def percent_complete(self):
+        """ Fraction of simulations that ran to completion. """
+        return self.completed.values.sum()/self.N
+
     def aggregate(self):
-        """ Aggregate results from each completed simulation. """
+        """
+        Aggregate results from each completed simulation and compile them into a dataframe.
+        """
 
         # parse simulation results
         results = [self.parse_simulation(sim) for sim in self]
-        error_dicts = [x for x in results if x != False]
-        self.incomplete = sum([x for x in results if x == False])/self.N
+
+        # store indices of completed simulations
+        index = np.arange(self.N)
+        self.completed = pd.DataFrame([x!=False for x in results], index=index)
 
         # compile results dataframe
-        self.df = pd.DataFrame.from_dict(error_dicts, orient='columns')
-        self.df.columns = pd.MultiIndex.from_tuples(self.df.columns)
+        error_dicts = [x for x in results if x != False]
+        self.results = pd.DataFrame.from_dict(error_dicts, orient='columns')
+        self.results.columns = pd.MultiIndex.from_tuples(self.results.columns)
 
     def slice_by_mode(self, mode='error'):
         """ Returns all results for a specified <mode>. """
-        return self.df.swaplevel(axis=1)[mode]
+        return self.results.swaplevel(axis=1)[mode]
 
     def slice_by_condition(self, condition='normal'):
         """ Returns all results for a specified <condition>. """
-        return self.df[condition]
+        return self.results[condition]
 
-    def build_figure(self, condition='normal', mode='error', **kwargs):
+    def build_figure(self,
+                     condition='normal',
+                     mode='error',
+                     relative=False,
+                     **kwargs):
         """
         Returns parameter sweep visualization.
 
         Args:
 
-            condition (str) - environmental condition
+            condition (str or tuple) - environmental condition
 
             mode (str) - comparison metric
+
+            relative (bool) - if True, computes difference relative to normal
 
             kwargs: keyword arguments for SweepFigure
 
         """
+
+        # evaluate results
+        results = self.results.loc[:, (condition, mode)]
+        if relative:
+            results = results - self.results.loc[:, ('normal', mode)]
+
         return SweepFigure(self.parameters,
-                           self.df.loc[:, (condition, mode)],
+                           results,
                            labels=self.labels,
                            base=self.base,
                            delta=self.delta,
@@ -396,5 +450,81 @@ class TwoStateSweep(Sweep):
         # add feedback (two equivalent sets)
         model.add_feedback(eta0, eta1, eta2, perturbed=False)
         model.add_feedback(eta0, eta1, eta2, perturbed=True)
+
+        return model
+
+
+class SimpleDependenceSweep(Sweep):
+
+    """
+    Parameter sweep for simple model. Parameters are:
+
+        0: synthesis growth dependence
+        1: degradation growth dependence
+        2: feedback strength growth dependence
+
+    """
+
+    def __init__(self, base=None, delta=2, pad=0.2, num_samples=2500):
+        """
+        Instantiate parameter sweep of a simple model.
+
+        Args:
+
+            base (np.ndarray[float]) - base parameter values
+
+            delta (float or np.ndarray[float]) - log-deviations about base
+
+            pad (float) - extra padding added to delta
+
+            num_samples (int) - number of samples in parameter space
+
+        """
+
+        # define parameter ranges, log10(val)
+        if base is None:
+            base = np.array([0, 0, 0])
+
+        self.base = base
+        self.delta = delta
+        self.pad = pad
+        self.labels = ('k', '\gamma', '\eta')
+        self.results = None
+
+        # sample parameter space
+        sampler = LinearSampler(base-delta-pad, base+delta+pad)
+        parameters = sampler.sample(num_samples)
+
+        # instantiate batch job
+        Batch.__init__(self, parameters=parameters)
+
+        # set run script
+        self.script_name = 'run_dependence.py'
+
+    @staticmethod
+    def build_model(parameters):
+        """
+        Returns a model instance defined by the provided parameters.
+
+        Args:
+
+            parameters (np.ndarray[float]) - model parameters
+
+        Returns:
+
+            model (LinearModel)
+
+        """
+
+        k, g, eta = 1, 0.001, 0.001
+
+        # extract parameters
+        lambda_k, lambda_g, lambda_eta = parameters
+
+        # instantiate base model
+        model = SimpleModel(k=k, g=g, lambda_g=lambda_g, lambda_k=lambda_k)
+
+        # add feedback (two equivalent sets)
+        model.add_feedback(eta, perturbed=True, lambda_eta=lambda_eta)
 
         return model

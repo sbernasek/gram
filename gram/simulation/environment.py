@@ -102,7 +102,8 @@ class ConditionSimulation(PerturbationSimulation):
         # set condition names
         self.condition_names = dict(normal='Normal',
                                   diabetic='Reduced Metabolism',
-                                  minute='Reduced Translation')
+                                  minute='Reduced Translation',
+                                  half_growth='Halved Growth Rate')
 
     def __getstate__(self):
         """ Returns all attributes except simulation trajectories. """

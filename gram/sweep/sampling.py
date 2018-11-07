@@ -68,7 +68,7 @@ class LinearSampler(SobolSampler):
 
 class LogSampler(LinearSampler):
     """
-    Class for log sampling a parameter space on a linear scale.
+    Class for uniformly sampling a parameter space on a log scale.
 
     Attributes:
 
@@ -76,11 +76,29 @@ class LogSampler(LinearSampler):
 
         high (np.ndarray[float]) - log10 upper bound for each parameter
 
+        base (float) - basis for logarithmic sampling
+
     Inherited attributes:
 
         dim (int) - dimensionality of sampled space
 
     """
+    def __init__(self, *args, base=10):
+        """
+        Instantiate sobol sampler.
+
+        Args:
+
+            low (np.ndarray[float]) - lower bound for each parameter
+
+            high (np.ndarray[float]) - upper bound for each parameter
+
+            base (float) - basis for logarithmic sampling
+
+        """
+        self.base = base
+        super().__init__(*args)
+
     def sample(self, N):
         """ Returns an array of <N> sobol samples. """
-        return 10**super().sample(N)
+        return self.base**super().sample(N)

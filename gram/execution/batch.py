@@ -18,6 +18,8 @@ class Batch:
 
         path (str) - path to batch directory
 
+        script_name (str) - name of script for running batch
+
         parameters (iterable) - parameter sets
 
         simulation_paths (dict) - relative paths to simulation directories
@@ -40,6 +42,7 @@ class Batch:
         """
         self.simulation_paths = {}
         self.parameters = parameters
+        self.script_name = 'run_batch.py'
 
     def __getitem__(self, index):
         """ Returns simulation instance. """
@@ -74,16 +77,19 @@ class Batch:
 
     @staticmethod
     def build_run_script(path,
+                         script_name,
                         num_trajectories,
                         saveall,
                         horizon,
-                        deviations):
+                        deviations,):
         """
         Writes bash run script for local use.
 
         Args:
 
             path (str) - path to simulation top directory
+
+            script_name (str) - name of run script
 
             num_trajectories (int) - number of simulation trajectories
 
@@ -101,7 +107,7 @@ class Batch:
 
         # copy run script to scripts directory
         run_script = abspath(__file__).rsplit('/', maxsplit=2)[0]
-        run_script = join(run_script, 'scripts', 'run_batch.py')
+        run_script = join(run_script, 'scripts', script_name)
         shutil.copy(run_script, join(path, 'scripts'))
 
         # declare outer script that reads PATH from file
@@ -115,7 +121,7 @@ class Batch:
         job_script.write('echo "Starting all batches at `date`"\n')
         job_script.write('while read P; do\n')
         job_script.write('echo "Processing batch ${P}"\n')
-        job_script.write('python ./scripts/run_batch.py ${P} ')
+        job_script.write('python ./scripts/{:s}'.format(script_name)+' ${P} ')
         args = (num_trajectories, saveall, horizon, deviations)
         job_script.write('-N {:d} -s {:d} -ch {:0.2f} -d {:d}\n'.format(*args))
         job_script.write('done < ./batches/index.txt \n')
@@ -130,6 +136,7 @@ class Batch:
 
     @staticmethod
     def build_submission_script(path,
+                                script_name,
                                 num_trajectories=5000,
                                 saveall=False,
                                 horizon=100,
@@ -142,6 +149,8 @@ class Batch:
         Args:
 
             path (str) - path to simulation top directory
+
+            script_name (str) - name of run script
 
             num_trajectories (int) - number of simulation trajectories
 
@@ -163,7 +172,7 @@ class Batch:
 
         # copy run script to scripts directory
         run_script = abspath(__file__).rsplit('/', maxsplit=2)[0]
-        run_script = join(run_script, 'scripts', 'run_batch.py')
+        run_script = join(run_script, 'scripts', script_name)
         shutil.copy(run_script, join(path, 'scripts'))
 
         # determine queue
@@ -208,7 +217,7 @@ class Batch:
         job_script.write('cd {:s} \n\n'.format(path))
 
         # run script
-        job_script.write('python ./scripts/run_batch.py ${P} ')
+        job_script.write('python ./scripts/{:s}'.format(script_name)+' ${P} ')
         args = (num_trajectories, saveall, horizon, deviations)
         job_script.write('-N {:d} -s {:d} -ch {:0.2f} -d {:d}\n'.format(*args))
         job_script.write('EOJ\n')
@@ -357,6 +366,7 @@ class Batch:
 
         # build job run script
         self.build_run_script(self.path,
+                              self.script_name,
                              num_trajectories,
                              saveall,
                              horizon,
@@ -364,6 +374,7 @@ class Batch:
 
         # build job submission script
         self.build_submission_script(self.path,
+                                     self.script_name,
                                      num_trajectories,
                                      saveall,
                                      horizon,

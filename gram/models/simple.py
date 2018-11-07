@@ -34,7 +34,12 @@ class SimpleModel(SimpleCell, Mutation):
 
     """
 
-    def __init__(self, name='X', k=1, g=1):
+    def __init__(self,
+                 name='X',
+                 k=1,
+                 g=1,
+                 lambda_g=0,
+                 lambda_k=0):
         """
         Instantiate a simple model of a single protein.
 
@@ -46,21 +51,29 @@ class SimpleModel(SimpleCell, Mutation):
 
             g (float) - protein decay rate constant
 
+            lambda_g (float) - degradation growth rate dependence
+
+            lambda_k (float) - synthesis growth rate dependence
+
         """
 
         self.name = name
 
         # instantiate linear cell with a single gene activated by the input
-        gene_kw = dict(g=g)
+        gene_kw = dict(g=g, growth_dependence=lambda_g)
         super().__init__(genes=(self.name,), I=1, **gene_kw)
 
         # add synthesis driven by input
-        self.add_activation(protein=self.name, activator='IN', k=k)
+        self.add_activation(protein=self.name,
+                            activator='IN',
+                            k=k,
+                            growth_dependence=lambda_k)
 
     def add_post_translational_feedback(self,
             k=None,
             atp_sensitive=2,
             ribosome_sensitive=True,
+            growth_dependence=0,
             **kwargs):
         """
         Adds linear negative feedback applied to protein level.
@@ -73,6 +86,8 @@ class SimpleModel(SimpleCell, Mutation):
 
             ribosome_sensitive (bool) - scale rate parameter with ribosomes
 
+            growth_dependence (float) - log k / log growth
+
             kwargs: keyword arguments for reaction
 
         """
@@ -84,9 +99,10 @@ class SimpleModel(SimpleCell, Mutation):
              k=k,
              atp_sensitive=atp_sensitive,
              ribosome_sensitive=ribosome_sensitive,
+             growth_dependence=growth_dependence,
              **kwargs)
 
-    def add_feedback(self, eta, perturbed=False):
+    def add_feedback(self, eta, perturbed=False, lambda_eta=0):
         """
         Add feedback.
 
@@ -96,5 +112,9 @@ class SimpleModel(SimpleCell, Mutation):
 
             perturbed (bool) - if True, feedback is sensitive to perturbation
 
+            lambda_eta (float) - feedback growth rate dependence
+
         """
-        self.add_post_translational_feedback(k=eta, perturbed=perturbed)
+        self.add_post_translational_feedback(k=eta,
+                                             perturbed=perturbed,
+                                            growth_dependence=lambda_eta)

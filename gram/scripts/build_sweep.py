@@ -1,6 +1,6 @@
 from gram.execution.arguments import SweepArguments
 from gram.sweep.sweep import LinearSweep, HillSweep, TwoStateSweep, SimpleSweep
-
+from gram.sweep.sweep import SimpleDependenceSweep
 
 # ======================== PARSE SCRIPT ARGUMENTS =============================
 
@@ -13,6 +13,8 @@ num_samples = args['number_of_samples']
 # instantiate sweep object
 if model == 'simple':
     sweep = SimpleSweep(num_samples=num_samples)
+elif model == 'simple_dependence':
+    sweep = SimpleDependenceSweep(num_samples=num_samples)
 elif model == 'linear':
     sweep = LinearSweep(num_samples=num_samples)
 elif model == 'hill':
@@ -38,6 +40,7 @@ sweep.build(
     pulse_magnitude=args['pulse_magnitude'],
     pulse_sensitive=args['pulse_sensitive'],
     simulation_duration=args['simulation_duration'])
+
 
 """
 
