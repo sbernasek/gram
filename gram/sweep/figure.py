@@ -111,6 +111,11 @@ class SweepFigure:
         rescaled_values = (values - bg.min()) / (bg.max() - bg.min())
         return rescaled_values
 
+    @staticmethod
+    def uniform_sample(xmin, xmax, density):
+        """ Returns uniform sample between <xmin> and <xmax>. """
+        return np.logspace(xmin, xmax, density)
+
     @classmethod
     def interpolate(cls, x, y, z, density=100, xbounds=None, ybounds=None):
         """
@@ -157,7 +162,8 @@ class SweepFigure:
             ymin, ymax = ybounds
 
         # create regular grid
-        xi, yi = np.logspace(xmin, xmax, density), np.logspace(ymin, ymax, density)
+        xi = cls.uniform_sample(xmin, xmax, density)
+        yi = cls.uniform_sample(ymin, ymax, density)
         xi, yi = np.meshgrid(xi, yi)
 
         # transform to normalized coordinates
@@ -394,3 +400,91 @@ class SweepFigure:
 
         # format axes
         self.format_axes(show=show, labelsize=labelsize)
+
+
+class DependenceSweepFigure(SweepFigure):
+    """
+    Class for visualizing a parameter sweep of growth dependencies.
+    """
+
+    @staticmethod
+    def uniform_sample(xmin, xmax, density):
+        """ Returns uniform sample between <xmin> and <xmax>. """
+        return np.linspace(xmin, xmax, density)
+
+    def format_axes(self, show=True, labelsize=6):
+        """
+        Format axis.
+
+        Args:
+
+            show (bool) - if False, remove axes
+
+            labelsize (int) - tick label size
+
+        """
+
+        # remove all axes
+        if not show:
+            for ax in self.axes:
+                ax.get_xaxis().set_visible(False)
+                ax.get_yaxis().set_visible(False)
+
+        # define tick formatter
+        f = lambda n, _: '{:0.1f}'.format(n)
+        formatter = mtick.FuncFormatter(f)
+
+        # format used axes
+        for ind, ax in enumerate(self.axes):
+
+            # get row/column indices
+            i, j = self.axes_dict[ind]
+
+            # log scale axes
+            ax.minorticks_off()
+
+            # get bounds of sampled data
+            xbounds, ybounds = self.get_bounds(i, j)
+
+            # label outermost y axes
+            if j == 0:
+
+                yticks = np.linspace(*ybounds, num=5)
+                ax.set_yticks(yticks)
+                yticklabels = np.round(yticks, 1)
+                #yticklabels = [None]+list(yticklabels[1:-1])+[None]
+                #ax.set_yticklabels(yticklabels)
+                ax.yaxis.set_tick_params(labelsize=labelsize, pad=1, length=3)
+
+                # add y-axis label
+                if self.labels is not None:
+                    fmt = lambda label: r'{:s} / {:s}'.format('log({:s})'.format(label), 'log(Growth)')
+                    ax.set_ylabel(fmt(self.labels[i+1]), fontsize=labelsize+1)
+
+            else:
+                ax.set_yticks([])
+                ax.set_yticklabels([])
+
+            # label outermost x axes
+            if i == self.P - 2:
+
+                xticks = np.linspace(*xbounds, num=5)
+                ax.set_xticks(xticks)
+                xticklabels = np.round(xticks, 1)
+                #xticklabels = [None] + list(xticklabels[1:-1]) + [None]
+                #ax.set_xticklabels(xticklabels, rotation=45, ha='right')
+                #ax.xaxis.set_tick_params(rotation=45)
+                ax.xaxis.set_tick_params(labelsize=labelsize, pad=1, length=3)
+
+                # add x-axis label
+                if self.labels is not None:
+                    fmt = lambda label: r'{:s} / {:s}'.format('log({:s})'.format(label), 'log(Growth)')
+                    ax.set_xlabel(fmt(self.labels[j]), fontsize=labelsize+1)
+
+                for label in ax.xaxis.get_ticklabels():
+                    label.set_horizontalalignment('center')
+
+            else:
+                ax.set_xticks([])
+                ax.set_xticklabels([])
+                ax.xaxis.set_minor_locator(plt.FixedLocator([]))

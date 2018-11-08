@@ -3,12 +3,12 @@ import pandas as pd
 from os.path import join, exists
 
 from ..execution.batch import Batch
-from .sampling import LogSampler, LinearSampler
+from .sampling import LogSampler, LinearSampler, DenseSampler
 from ..models.linear import LinearModel
 from ..models.hill import HillModel
 from ..models.twostate import TwoStateModel
 from ..models.simple import SimpleModel
-from .figure import SweepFigure
+from .figure import SweepFigure, DependenceSweepFigure
 
 
 class Sweep(Batch):
@@ -176,6 +176,9 @@ class Sweep(Batch):
                            base=self.base,
                            delta=self.delta,
                            **kwargs)
+
+
+
 
 
 class SimpleSweep(Sweep):
@@ -465,7 +468,7 @@ class SimpleDependenceSweep(Sweep):
 
     """
 
-    def __init__(self, base=None, delta=2, pad=0.2, num_samples=2500):
+    def __init__(self, base=None, delta=1, pad=0., num_samples=11):
         """
         Instantiate parameter sweep of a simple model.
 
@@ -488,11 +491,11 @@ class SimpleDependenceSweep(Sweep):
         self.base = base
         self.delta = delta
         self.pad = pad
-        self.labels = ('k', '\gamma', '\eta')
+        self.labels = ('Synthesis', 'Decay', 'Feedback')
         self.results = None
 
         # sample parameter space
-        sampler = LinearSampler(base-delta-pad, base+delta+pad)
+        sampler = DenseSampler(base-delta, base+delta)
         parameters = sampler.sample(num_samples)
 
         # instantiate batch job
@@ -528,3 +531,36 @@ class SimpleDependenceSweep(Sweep):
         model.add_feedback(eta, perturbed=True, lambda_eta=lambda_eta)
 
         return model
+
+    def build_figure(self,
+                     condition='normal',
+                     mode='error',
+                     relative=False,
+                     **kwargs):
+        """
+        Returns parameter sweep visualization.
+
+        Args:
+
+            condition (str or tuple) - environmental condition
+
+            mode (str) - comparison metric
+
+            relative (bool) - if True, computes difference relative to normal
+
+            kwargs: keyword arguments for SweepFigure
+
+        """
+
+        # evaluate results
+        results = self.results.loc[:, (condition, mode)]
+        if relative:
+            results = results - self.results.loc[:, ('normal', mode)]
+
+        return DependenceSweepFigure(
+            self.parameters,
+            results,
+            labels=self.labels,
+            base=self.base,
+            delta=self.delta,
+            **kwargs)
