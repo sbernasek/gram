@@ -115,6 +115,7 @@ class SimpleModel(SimpleCell, Mutation):
             lambda_eta (float) - feedback growth rate dependence
 
         """
-        self.add_post_translational_feedback(k=eta,
-                                             perturbed=perturbed,
-                                            growth_dependence=lambda_eta)
+        self.add_post_translational_feedback(
+            k=eta,
+            perturbed=perturbed,
+            growth_dependence=lambda_eta)
