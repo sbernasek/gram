@@ -128,7 +128,7 @@ class DenseSampler:
             high (np.ndarray[float]) - upper bound for each parameter
 
         """
-        self.dim = self.low.size
+        self.dim = len(low)
         self.low = low
         self.high = high
 
