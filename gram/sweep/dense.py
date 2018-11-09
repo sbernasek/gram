@@ -17,7 +17,7 @@ class SimpleDense2D(Sweep):
 
     """
 
-    def __init__(self, base=None, delta=1, num_samples=51):
+    def __init__(self, base=None, delta=0, num_samples=51):
         """
         Instantiate parameter sweep of a simple model.
 
@@ -33,7 +33,7 @@ class SimpleDense2D(Sweep):
 
         # define parameter ranges, log10(val)
         if base is None:
-            base = np.array([1, 1])
+            base = np.array([2, 2])
 
         self.base = base
         self.delta = delta
