@@ -402,7 +402,7 @@ class SweepFigure:
         self.format_axes(show=show, labelsize=labelsize)
 
 
-class DependenceSweepFigure(SweepFigure):
+class LinearSweepFigure(SweepFigure):
     """
     Class for visualizing a parameter sweep of growth dependencies.
     """

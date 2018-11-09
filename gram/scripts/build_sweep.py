@@ -1,6 +1,6 @@
 from gram.execution.arguments import SweepArguments
 from gram.sweep.sweep import LinearSweep, HillSweep, TwoStateSweep, SimpleSweep
-from gram.sweep.sweep import SimpleDependenceSweep
+from gram.sweep.dense import SimpleDense2D, SimpleDependenceSweep
 
 # ======================== PARSE SCRIPT ARGUMENTS =============================
 
@@ -15,6 +15,8 @@ if model == 'simple':
     sweep = SimpleSweep(num_samples=num_samples)
 elif model == 'simple_dependence':
     sweep = SimpleDependenceSweep(num_samples=num_samples)
+elif model == 'simple_2d':
+    sweep = SimpleDense2D(num_samples=num_samples)
 elif model == 'linear':
     sweep = LinearSweep(num_samples=num_samples)
 elif model == 'hill':
