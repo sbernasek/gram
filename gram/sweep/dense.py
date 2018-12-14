@@ -111,7 +111,7 @@ class SimpleDependenceSweep(Sweep):
 
         # define parameter ranges, log10(val)
         if base is None:
-            base = np.array([0, 0, 0])
+            base = np.array([1, 1, 1])
 
         self.base = base
         self.delta = delta
