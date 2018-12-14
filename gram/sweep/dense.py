@@ -1,10 +1,10 @@
 import numpy as np
 from copy import deepcopy
 from ..execution.batch import Batch
-from .sampling import DenseSampler
 from ..models.simple import SimpleModel
 from .figure import LinearSweepFigure
 from .sweep import Sweep
+from .sampling import DenseLinearSampler
 
 
 class SimpleDense2D(Sweep):
@@ -41,7 +41,7 @@ class SimpleDense2D(Sweep):
         self.results = None
 
         # sample parameter space
-        sampler = DenseSampler(base-delta, base+delta)
+        sampler = DenseLinearSampler(base-delta, base+delta)
         parameters = sampler.sample(num_samples)
 
         # instantiate batch job
@@ -120,7 +120,7 @@ class SimpleDependenceSweep(Sweep):
         self.results = None
 
         # sample parameter space
-        sampler = DenseSampler(base-delta, base+delta)
+        sampler = DenseLinearSampler(base-delta, base+delta)
         parameters = sampler.sample(num_samples)
 
         # instantiate batch job

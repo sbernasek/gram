@@ -29,7 +29,7 @@ class SobolSampler:
         return np.array([i4_sobol(self.dim, i)[0] for i in range(N)])
 
 
-class LinearSampler(SobolSampler):
+class SobolLinearSampler(SobolSampler):
     """
     Class for sobol sampling a parameter space on a linear scale.
 
@@ -65,7 +65,7 @@ class LinearSampler(SobolSampler):
         return self.low+(self.high-self.low)*super().sample(N)
 
 
-class LogSampler(LinearSampler):
+class SobolLogSampler(SobolLinearSampler):
     """
     Class for uniformly sampling a parameter space on a log scale.
 
@@ -103,7 +103,7 @@ class LogSampler(LinearSampler):
         return self.base**super().sample(N)
 
 
-class DenseSampler:
+class DenseLinearSampler:
     """
     Class for dense sampling a parameter space on a linear scale.
 
@@ -145,3 +145,40 @@ class DenseSampler:
         points = [np.linspace(l, h, density) for l,h in bounds]
         grids = np.meshgrid(*points, indexing='ij')
         return np.stack([g.ravel() for g in grids]).T
+
+
+class DenseLogSampler(DenseLinearSampler):
+    """
+    Class for dense sampling a parameter space on a log scale.
+
+    Attributes:
+
+        dim (int) - dimensionality of sampled space
+
+        low (np.ndarray[float]) - lower bound for each parameter
+
+        high (np.ndarray[float]) - upper bound for each parameter
+
+        base (float) - basis for logarithmic sampling
+
+    """
+
+    def __init__(self, low, high, base=2):
+        """
+        Instantiate sobol sampler.
+
+        Args:
+
+            low (np.ndarray[float]) - lower log-bound for each parameter
+
+            high (np.ndarray[float]) - upper log-bound for each parameter
+
+            base (float) - basis for logarithmic sampling
+
+        """
+        super().__init__(low, high)
+        self.base = base
+
+    def sample(self, density):
+        """ Returns an array of <N> sobol samples. """
+        return self.base**super().sample(density)

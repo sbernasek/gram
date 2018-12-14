@@ -3,11 +3,11 @@ import pandas as pd
 from os.path import join, exists
 
 from ..execution.batch import Batch
-from .sampling import LogSampler, LinearSampler, DenseSampler
 from ..models.linear import LinearModel
 from ..models.hill import HillModel
 from ..models.twostate import TwoStateModel
 from ..models.simple import SimpleModel
+from .sampling import SobolLogSampler, SobolLinearSampler, DenseLinearSampler
 from .figure import SweepFigure
 
 
@@ -76,7 +76,7 @@ class Sweep(Batch):
         self.results = None
 
         # sample parameter space
-        sampler = LogSampler(base-delta-pad, base+delta+pad, base=logbase)
+        sampler = SobolLogSampler(base-delta-pad, base+delta+pad, base=logbase)
         parameters = sampler.sample(num_samples)
 
         # instantiate batch job
@@ -170,7 +170,7 @@ class Sweep(Batch):
         if relative:
             results = results - self.results.loc[:, ('normal', mode)]
 
-        return SweepFigure(self.parameters,
+        return SweepFigure(self.parameters[self.completed.values.ravel()],
                            results,
                            labels=self.labels,
                            base=self.base,
