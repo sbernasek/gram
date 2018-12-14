@@ -50,7 +50,7 @@ class RepressorInfluenceSweep(Sweep):
         Batch.__init__(self, parameters=parameters)
 
         # set run script
-        self.script_name = 'run_simple_simulation.py'
+        self.script_name = 'run_simple_batch.py'
 
     @staticmethod
     def build_model(parameters):

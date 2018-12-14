@@ -53,6 +53,6 @@ sweep.build(
 """
 
 # basal input
-python build_sweep.py -N 5000 -n 2500 -b 25 -s 0 -w 10 -pb 0.1 -ps 50 -sd 250 -d true
+#python build_sweep.py -N 5000 -n 2500 -b 25 -s 0 -w 10 -pb 0.1 -ps 50 -sd 250 -d true
 
 """
