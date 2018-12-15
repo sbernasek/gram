@@ -139,7 +139,7 @@ class Batch:
                                 script_name,
                                 num_trajectories=5000,
                                 saveall=False,
-                                horizon=100,
+                                horizon=0,
                                 deviations=False,
                                 walltime=10,
                                 allocation='p30653'):
@@ -314,7 +314,7 @@ class Batch:
               batch_size=25,
               num_trajectories=5000,
               saveall=False,
-              horizon=100,
+              horizon=0,
               deviations=False,
               walltime=10,
               allocation='p30653',

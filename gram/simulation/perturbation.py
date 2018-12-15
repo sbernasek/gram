@@ -104,7 +104,7 @@ class PerturbationSimulation(PulseSimulation):
                 reference,
                 compared,
                 mode=None,
-                horizon=100,
+                horizon=0,
                 deviations=False,
                 **kwargs):
         """
@@ -122,7 +122,7 @@ class PerturbationSimulation(PulseSimulation):
                 cdf: fraction of gaussian model below/above reference
                 threshold: fraction of gaussian model above threshold
 
-            horizon (float) - duration of comparison
+            horizon (float) - duration of comparison, 0 if unlimited
 
             deviations (bool) - if True, compare deviations from initial value
 
@@ -141,7 +141,10 @@ class PerturbationSimulation(PulseSimulation):
 
         # crop timeseries
         start = self.pulse_start  / self.timescale
-        stop = start + horizon
+        if horizon is None or horizon == 0:
+            stop = self.simulation_duration / self.timescale
+        else:
+            stop = start + horizon
         reference = reference.crop(start, stop)
         compared = compared.crop(start, stop)
 

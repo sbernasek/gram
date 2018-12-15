@@ -51,7 +51,7 @@ class RunArguments(ArgumentParser):
                '-ch', '--horizon',
                help='Duration of comparison.',
                type=float,
-               default=100.,
+               default=0.,
                required=False)
 
           # add keyword argument for using deviation variables
@@ -136,7 +136,7 @@ class PulseArguments(RunArguments):
                '-sd', '--simulation_duration',
                help='Simulation duration.',
                type=float,
-               default=500.,
+               default=1000.,
                required=False)
 
 

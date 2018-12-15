@@ -109,10 +109,24 @@ class Sweep(Batch):
             return False
         else:
             errors = {}
-            for condition, comparison in simulation.comparisons.items():
-                errors[(condition, 'above')] = comparison.above
-                errors[(condition, 'below')] = comparison.below
-                errors[(condition, 'error')] = comparison.error
+            for c, comparison in simulation.comparisons.items():
+
+                if comparison.reached_comparison:
+                    errors[(c, 'above')] = comparison.above
+                    errors[(c, 'below')] = comparison.below
+                    errors[(c, 'error')] = comparison.error
+                    errors[(c, 'above_threshold')] = comparison.above_threshold
+                    errors[(c, 'below_threshold')] = comparison.below_threshold
+                    errors[(c, 'threshold_error')] = comparison.threshold_error
+                else:
+                    fail = None
+                    errors[(c, 'above')] = fail
+                    errors[(c, 'below')] = fail
+                    errors[(c, 'error')] = fail
+                    errors[(c, 'above_threshold')] = fail
+                    errors[(c, 'below_threshold')] = fail
+                    errors[(c, 'threshold_error')] = fail
+
             return errors
 
     @property

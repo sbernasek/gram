@@ -67,7 +67,6 @@ class RepressorInfluenceSweep(Sweep):
 
         """
 
-
         eta, relative_influence = parameters
 
         k, g = 1, eta/relative_influence

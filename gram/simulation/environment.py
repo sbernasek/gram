@@ -281,7 +281,7 @@ class ConditionSimulation(PerturbationSimulation):
 
     def compare(self,
                 mode=None,
-                horizon=100,
+                horizon=0,
                 deviations=False,
                 inplace=True,
                 **kwargs):
@@ -296,7 +296,7 @@ class ConditionSimulation(PerturbationSimulation):
                 cdf: fraction of gaussian model below/above reference
                 threshold: fraction of gaussian model above threshold
 
-            horizon (float) - duration of comparison
+            horizon (float) - duration of comparison, 0 if unlimited
 
             deviations (bool) - if True, compare deviations from initial value
 
