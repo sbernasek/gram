@@ -534,7 +534,7 @@ class PromoterComparison(Comparison):
     """
     Comparison method for promoter perturbations.
 
-    Same as parent Comparison method, but uses commitment time based on lower bound.
+    Uses commitment time based on lower bound, and evaluates threshold at time of peak expression.
     """
     def __init__(self, reference, compared, fraction_of_max=0.1, dim=-1):
         """
@@ -562,6 +562,21 @@ class PromoterComparison(Comparison):
             return None
         else:
             return indices[-1]
+
+    def evaluate_threshold(self):
+        """
+        Evaluate threshold comparison.
+
+        Returns:
+
+            below (float) - mean fraction of trajectories below the reference
+
+            above (float) - mean fraction of trajectories above the reference
+
+        """
+        below = self.fractions_below[self._peak_index]
+        above = self.fractions_above[self._peak_index]
+        return below, above
 
 
 class AreaComparison(Comparison):
