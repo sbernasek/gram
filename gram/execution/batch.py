@@ -80,8 +80,8 @@ class Batch:
                          script_name,
                         num_trajectories,
                         saveall,
-                        horizon,
-                        deviations,):
+                        deviations,
+                        comparison):
         """
         Writes bash run script for local use.
 
@@ -95,9 +95,9 @@ class Batch:
 
             saveall (bool) - if True, save simulation trajectories
 
-            horizon (float) - duration of comparison
-
             deviations (bool) - if True, use deviation variables
+
+            comparison (str) - type of comparison
 
         """
 
@@ -122,8 +122,8 @@ class Batch:
         job_script.write('while read P; do\n')
         job_script.write('echo "Processing batch ${P}"\n')
         job_script.write('python ./scripts/{:s}'.format(script_name)+' ${P} ')
-        args = (num_trajectories, saveall, horizon, deviations)
-        job_script.write('-N {:d} -s {:d} -ch {:0.2f} -d {:d}\n'.format(*args))
+        args = (num_trajectories, saveall, deviations, comparison)
+        job_script.write('-N {:d} -s {:d} -d {:d} -cm {:s} \n'.format(*args))
         job_script.write('done < ./batches/index.txt \n')
         job_script.write('echo "Completed all batches at `date`"\n')
         job_script.write('exit\n')
@@ -139,8 +139,8 @@ class Batch:
                                 script_name,
                                 num_trajectories=5000,
                                 saveall=False,
-                                horizon=0,
                                 deviations=False,
+                                comparison='empirical',
                                 walltime=10,
                                 allocation='p30653'):
         """
@@ -156,9 +156,9 @@ class Batch:
 
             saveall (bool) - if True, save simulation trajectories
 
-            horizon (float) - duration of comparison
-
             deviations (bool) - if True, use deviation variables
+
+            comparison (str) - type of comparison
 
             walltime (int) - estimated job run time
 
@@ -218,8 +218,8 @@ class Batch:
 
         # run script
         job_script.write('python ./scripts/{:s}'.format(script_name)+' ${P} ')
-        args = (num_trajectories, saveall, horizon, deviations)
-        job_script.write('-N {:d} -s {:d} -ch {:0.2f} -d {:d}\n'.format(*args))
+        args = (num_trajectories, saveall, deviations, comparison)
+        job_script.write('-N {:d} -s {:d} -d {:d} -cm {:s} \n'.format(*args))
         job_script.write('EOJ\n')
         job_script.write('`\n\n')
         # ============= end submission script for individual batch ============
@@ -314,8 +314,8 @@ class Batch:
               batch_size=25,
               num_trajectories=5000,
               saveall=False,
-              horizon=0,
               deviations=False,
+              comparison='empirical',
               walltime=10,
               allocation='p30653',
               **sim_kw):
@@ -332,9 +332,9 @@ class Batch:
 
             saveall (bool) - if True, save simulation trajectories
 
-            horizon (float) - duration of comparison
-
             deviations (bool) - if True, use deviation variables
+
+            comparison (str) - type of comparison
 
             walltime (int) - estimated job run time
 
@@ -369,16 +369,16 @@ class Batch:
                               self.script_name,
                              num_trajectories,
                              saveall,
-                             horizon,
-                             deviations)
+                             deviations,
+                             comparison)
 
         # build job submission script
         self.build_submission_script(self.path,
                                      self.script_name,
                                      num_trajectories,
                                      saveall,
-                                     horizon,
                                      deviations,
+                                     comparison,
                                      walltime=walltime,
                                      allocation=allocation)
 
