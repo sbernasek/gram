@@ -530,6 +530,40 @@ class Comparison(ComparisonProperties, ComparisonMethods, ComparisonVis):
         return below, above
 
 
+class PromoterComparison(Comparison):
+    """
+    Comparison method for promoter perturbations.
+
+    Same as parent Comparison method, but uses commitment time based on lower bound.
+    """
+    def __init__(self, reference, compared, fraction_of_max=0.1, dim=-1):
+        """
+        Instantiate timeseries comparison object.
+
+        Args:
+
+            reference (TimeSeries) - reference timeseries
+
+            compared (TimeSeries) - timeseries to be compared
+
+            fraction_of_max (float) - fraction of peak mean reference value used to define commitment time
+
+            dim (int) - state space dimension to be compared
+
+        """
+        super().__init__(reference, compared, fraction_of_max, dim)
+
+    @property
+    def _comparison_index(self):
+        """ Index of time at which reference reaches threshold. """
+        indices = self.reference.index(self.threshold, self.dim, mode='lower')
+
+        if indices.size == 0 or indices[-1] == 0:
+            return None
+        else:
+            return indices[-1]
+
+
 class AreaComparison(Comparison):
     """
     Class for comparing a timeseries against a reference. Comparison is based on evaluating the fraction of the compared timeseries' confidence band that does not intersect with the reference timeseries' confidence band.

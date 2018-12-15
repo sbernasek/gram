@@ -78,6 +78,14 @@ class RunArguments(ArgumentParser):
                default=False,
                required=False)
 
+          # add keyword argument for comparison mode
+          self.add_argument(
+               '-cm', '--comparison_mode',
+               help='Comparison mode.',
+               type=str,
+               default='empirical',
+               required=False)
+
      def parse(self):
           """ Parse arguments. """
           self.args = vars(self.parse_args())

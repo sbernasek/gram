@@ -1,7 +1,8 @@
 # external package imports
 
 # internal imports
-from ..analysis.comparison import Comparison, AreaComparison, CDFComparison
+from ..analysis.comparison import Comparison, PromoterComparison
+from ..analysis.comparison import AreaComparison, CDFComparison
 from ..analysis.comparison import ThresholdComparison
 from .pulse import PulseSimulation
 
@@ -151,6 +152,8 @@ class PerturbationSimulation(PulseSimulation):
         # evaluate comparison
         if mode == 'empirical' or mode is None:
             comparison = Comparison(reference, compared, **kwargs)
+        elif mode == 'promoters':
+            comparison = PromoterComparison(reference, compared, **kwargs)
         elif mode == 'area':
             comparison = AreaComparison(reference, compared, **kwargs)
         elif mode == 'cdf':

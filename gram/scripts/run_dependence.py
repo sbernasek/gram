@@ -11,7 +11,8 @@ skwargs = dict(N=args['number_of_trajectories'],
                conditions=['normal', 'half_growth'])
 
 ckwargs = dict(horizon=args['horizon'],
-               deviations=args['use_deviations'])
+               deviations=args['use_deviations'],
+               mode=args['comparison_mode'])
 
 
 # ============================= RUN SCRIPT ====================================

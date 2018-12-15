@@ -7,7 +7,9 @@ from gram.execution.arguments import RunArguments
 
 args = RunArguments(description='Simulation arguments.')
 skwargs = dict(N=args['number_of_trajectories'], debug=args['debug'])
-ckwargs = dict(horizon=args['horizon'], deviations=args['use_deviations'])
+ckwargs = dict(horizon=args['horizon'],
+               deviations=args['use_deviations'],
+               mode=args['comparison_mode'])
 path = args['path']
 
 # ============================= RUN SCRIPT ====================================
