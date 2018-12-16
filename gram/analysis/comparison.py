@@ -536,32 +536,16 @@ class PromoterComparison(Comparison):
 
     Uses commitment time based on lower bound, and evaluates threshold at time of peak expression.
     """
-    def __init__(self, reference, compared, fraction_of_max=0.1, dim=-1):
-        """
-        Instantiate timeseries comparison object.
 
-        Args:
+    # @property
+    # def _comparison_index(self):
+    #     """ Index of time at which reference reaches threshold. """
+    #     indices = self.reference.index(self.threshold, self.dim, mode='lower')
 
-            reference (TimeSeries) - reference timeseries
-
-            compared (TimeSeries) - timeseries to be compared
-
-            fraction_of_max (float) - fraction of peak mean reference value used to define commitment time
-
-            dim (int) - state space dimension to be compared
-
-        """
-        super().__init__(reference, compared, fraction_of_max, dim)
-
-    @property
-    def _comparison_index(self):
-        """ Index of time at which reference reaches threshold. """
-        indices = self.reference.index(self.threshold, self.dim, mode='lower')
-
-        if indices.size == 0 or indices[-1] == 0:
-            return None
-        else:
-            return indices[-1]
+    #     if indices.size == 0 or indices[-1] == 0:
+    #         return None
+    #     else:
+    #         return indices[-1]
 
     def evaluate_threshold(self):
         """
