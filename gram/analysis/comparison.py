@@ -537,15 +537,15 @@ class PromoterComparison(Comparison):
     Uses commitment time based on lower bound, and evaluates threshold at time of peak expression.
     """
 
-    # @property
-    # def _comparison_index(self):
-    #     """ Index of time at which reference reaches threshold. """
-    #     indices = self.reference.index(self.threshold, self.dim, mode='lower')
+    @property
+    def _comparison_index(self):
+        """ Index of time at which reference reaches threshold. """
+        indices = self.reference.index(self.threshold, self.dim, mode='lower')
 
-    #     if indices.size == 0 or indices[-1] == 0:
-    #         return None
-    #     else:
-    #         return indices[-1]
+        if indices.size == 0 or indices[-1] == 0:
+            return None
+        else:
+            return indices[-1]
 
     def evaluate_threshold(self):
         """
