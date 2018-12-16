@@ -72,7 +72,7 @@ class RepressorInfluenceSweep(Sweep):
         k, g = 1, eta/relative_influence
 
         # extract parameters
-        lambda_k, lambda_g = 1., 0.5
+        lambda_k, lambda_g = 1., 1. #0.5
 
         # instantiate base model
         model = SimpleModel(k=k, g=g, lambda_g=0.5, lambda_k=1.)
@@ -138,7 +138,7 @@ class PromoterInfluenceSweep(RepressorInfluenceSweep):
         k, g = k_mutant/relative_influence, 0.001
 
         # extract parameters
-        lambda_k, lambda_g = 1., 0.5
+        lambda_k, lambda_g = 1., 1. #0.5
 
         # instantiate base model
         model = SimpleModel(k=k, g=g, lambda_g=0.5, lambda_k=1.)
