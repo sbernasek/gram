@@ -75,7 +75,7 @@ class RepressorInfluenceSweep(Sweep):
         lambda_k, lambda_g = 1., 1. #0.5
 
         # instantiate base model
-        model = SimpleModel(k=k, g=g, lambda_g=0.5, lambda_k=1.)
+        model = SimpleModel(k=k, g=g, lambda_g=lambda_g, lambda_k=lambda_k)
 
         # add feedback (second perturbation-sensitive decay reaction)
         fb_rxn = deepcopy(model.reactions[0])
@@ -141,7 +141,7 @@ class PromoterInfluenceSweep(RepressorInfluenceSweep):
         lambda_k, lambda_g = 1., 1. #0.5
 
         # instantiate base model
-        model = SimpleModel(k=k, g=g, lambda_g=0.5, lambda_k=1.)
+        model = SimpleModel(k=k, g=g, lambda_g=lambda_g, lambda_k=lambda_k)
 
         # add promoter (second perturbation-sensitive activation reaction)
         act_rxn = deepcopy(model.reactions[-1])
