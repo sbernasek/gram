@@ -216,7 +216,7 @@ class SweepFigure:
                     self.heatmaps[(i, j)] = (grid, colors)
 
     @staticmethod
-    def draw_heatmap(ax, grid, colors, cmap=None, bad='k', vmin=-1, vmax=1):
+    def draw_heatmap(ax, grid, colors, cmap=None, bad='k', vmin=-1, vmax=1, rasterized=True):
         """
         Draw heatmap on specified axes.
 
@@ -236,6 +236,8 @@ class SweepFigure:
 
             vmax (float) - upper bound for color scale
 
+            rasterized (bool) - if True, rasterize mesh
+
         """
 
         # define colormap
@@ -245,7 +247,7 @@ class SweepFigure:
 
         # add data to plot
         colors = np.ma.masked_invalid(colors)
-        im = ax.pcolormesh(*grid, colors, cmap=cmap, vmin=vmin, vmax=vmax)
+        im = ax.pcolormesh(*grid, colors, cmap=cmap, vmin=vmin, vmax=vmax, rasterized=rasterized)
 
     @staticmethod
     def create_figure(num_params, gap=0.05, figsize=(5, 5)):
@@ -281,20 +283,22 @@ class SweepFigure:
             axes_dict[ind] = (i, j)
         return fig, axes_dict
 
-    def format_axes(self, show=True, labelsize=6):
+    def format_axes(self, include_axis=True, include_labels=True, labelsize=6):
         """
         Format axis.
 
         Args:
 
-            show (bool) - if False, remove axes
+            include_axis (bool) - if False, remove axes
+
+            include_labels (bool) - if False, remove axis labels
 
             labelsize (int) - tick label size
 
         """
 
         # remove all axes
-        if not show:
+        if not include_axis:
             for ax in self.axes:
                 ax.get_xaxis().set_visible(False)
                 ax.get_yaxis().set_visible(False)
@@ -316,6 +320,7 @@ class SweepFigure:
 
             # get bounds of sampled data
             xbounds, ybounds = self.get_bounds(i, j)
+            btick = ['']
 
             # label outermost y axes
             if j == 0:
@@ -323,12 +328,12 @@ class SweepFigure:
                 yticks = np.logspace(*ybounds, num=6, base=10)
                 ax.set_yticks(yticks)
                 yticklabels = np.round(np.log10(yticks), 1)
-                yticklabels = [None]+list(yticklabels[1:-1])+[None]
+                yticklabels = btick+list(yticklabels[1:-1])+btick
                 ax.set_yticklabels(yticklabels)
                 ax.yaxis.set_tick_params(labelsize=labelsize, pad=0, length=1)
 
                 # add y-axis label
-                if self.labels is not None:
+                if self.labels is not None and include_labels:
                     prefix = r'$\log_{10}\ $'
                     fmt = lambda label: prefix + '${:s}$'.format(label)
                     ax.set_ylabel(fmt(self.labels[i+1]))
@@ -343,13 +348,13 @@ class SweepFigure:
                 xticks = np.logspace(*xbounds, num=6, base=10)
                 ax.set_xticks(xticks)
                 xticklabels = np.round(np.log10(xticks), 1)
-                xticklabels = [None] + list(xticklabels[1:-1]) + [None]
+                xticklabels = btick + list(xticklabels[1:-1]) + btick
                 ax.set_xticklabels(xticklabels, rotation=45, ha='right')
                 #ax.xaxis.set_tick_params(rotation=45)
                 ax.xaxis.set_tick_params(labelsize=labelsize, pad=0, length=1)
 
                 # add x-axis label
-                if self.labels is not None:
+                if self.labels is not None and include_labels:
                     prefix = r'$\log_{10}\ $'
                     fmt = lambda label: prefix + '${:s}$'.format(label)
                     ax.set_xlabel(fmt(self.labels[j]))
@@ -364,7 +369,8 @@ class SweepFigure:
 
     def render(self,
                density=100,
-               show=True,
+               include_axis=True,
+               include_labels=True,
                labelsize=6,
                fig_kwargs={},
                heatmap_kwargs={}):
@@ -375,7 +381,9 @@ class SweepFigure:
 
             density (int) - grid density
 
-            show (bool) - if False, remove axes
+            include_axis (bool) - if False, remove axes
+
+            include_labels (bool) - if False, remove axis labels
 
             labelsize (int) - tick label size
 
@@ -399,7 +407,7 @@ class SweepFigure:
             self.draw_heatmap(ax, grid, colors, **heatmap_kwargs)
 
         # format axes
-        self.format_axes(show=show, labelsize=labelsize)
+        self.format_axes(include_axis=include_axis, include_labels=include_labels, labelsize=labelsize)
 
 
 class LinearSweepFigure(SweepFigure):
@@ -412,20 +420,22 @@ class LinearSweepFigure(SweepFigure):
         """ Returns uniform sample between <xmin> and <xmax>. """
         return np.linspace(xmin, xmax, density)
 
-    def format_axes(self, show=True, labelsize=6):
+    def format_axes(self, include_axis=True, include_labels=True, labelsize=6):
         """
         Format axis.
 
         Args:
 
-            show (bool) - if False, remove axes
+            include_axis (bool) - if False, remove axes
+
+            include_labels (bool) - if False, remove axis labels
 
             labelsize (int) - tick label size
 
         """
 
         # remove all axes
-        if not show:
+        if not include_axis:
             for ax in self.axes:
                 ax.get_xaxis().set_visible(False)
                 ax.get_yaxis().set_visible(False)
@@ -457,7 +467,7 @@ class LinearSweepFigure(SweepFigure):
                 ax.yaxis.set_tick_params(labelsize=labelsize, pad=1, length=3)
 
                 # add y-axis label
-                if self.labels is not None:
+                if self.labels is not None and include_labels:
                     fmt = lambda label: r'{:s} / {:s}'.format('log({:s})'.format(label), 'log(Growth)')
                     ax.set_ylabel(fmt(self.labels[i+1]), fontsize=labelsize+1)
 
@@ -477,7 +487,7 @@ class LinearSweepFigure(SweepFigure):
                 ax.xaxis.set_tick_params(labelsize=labelsize, pad=1, length=3)
 
                 # add x-axis label
-                if self.labels is not None:
+                if self.labels is not None and include_labels:
                     fmt = lambda label: r'{:s} / {:s}'.format('log({:s})'.format(label), 'log(Growth)')
                     ax.set_xlabel(fmt(self.labels[j]), fontsize=labelsize+1)
 

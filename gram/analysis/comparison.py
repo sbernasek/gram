@@ -177,13 +177,28 @@ class ComparisonVis:
     Visualization methods for comparison objects.
     """
 
-    def shade_outlying_areas(self, alpha=0.5, ax=None, show_threshold=False):
+    def shade_outlying_areas(self,
+                             alpha=0.2,
+                             reference_color='k',
+                             compared_color='k',
+                             above_color='r',
+                             above_alpha=0.5,
+                             below_color='b',
+                             below_alpha=0.5,
+                             ax=None,
+                             show_threshold=False):
         """
         Visualize comparison by shading the region encompassing trajectories that lie below or above all reference trajectories.
 
         Args:
 
             alpha (float) - opacity for shaded regions of confidence band
+
+            reference_color (str) - color for reference confidence band
+
+            compared_color (str) - color for compared confidence band
+
+            above_color, below_color (str) - colors for above/below reference
 
             ax (matplotlib.axes.AxesSubplot) - if None, create figure
 
@@ -196,19 +211,19 @@ class ComparisonVis:
             fig, ax = plt.subplots(figsize=(3, 2))
 
         # extract bounds for confidence bands
-        tf = self.comparison_index
+        tf = self.comparison_index + 1
         t = self.t[:tf]
         rbounds = (self.lower[:tf], self.upper[:tf])
         cbounds = (self.compared.lower[self.dim][:tf],
                    self.compared.upper[self.dim][:tf])
 
         # plot confidence band for reference
-        ax.fill_between(t, *rbounds, color='k', alpha=0.2)
+        ax.fill_between(t, *rbounds, color=reference_color, alpha=alpha)
         ax.plot(t, rbounds[0], '-k')
         ax.plot(t, rbounds[1], '-k')
 
         # plot confidence band for compared
-        ax.fill_between(t, *cbounds, color='k', alpha=0.2)
+        ax.fill_between(t, *cbounds, color=compared_color, alpha=alpha)
         ax.plot(t, cbounds[0], '--k')
         ax.plot(t, cbounds[1], '--k')
 
@@ -218,8 +233,8 @@ class ComparisonVis:
             ax.fill_between(t[ind],
                             lbound_b[ind],
                             ubound_b[ind],
-                            color='b',
-                            alpha=alpha)
+                            color=below_color,
+                            alpha=below_alpha)
 
         # shade regions above reference
         ind_a, lbound_a, ubound_a = self.extract_region_above(rbounds, cbounds)
@@ -227,8 +242,8 @@ class ComparisonVis:
             ax.fill_between(t[ind],
                             lbound_a[ind],
                             ubound_a[ind],
-                            color='r',
-                            alpha=alpha)
+                            color=above_color,
+                            alpha=above_alpha)
 
         # display threshold definition
         if show_threshold:
@@ -254,7 +269,7 @@ class ComparisonVis:
             fig, ax = plt.subplots(figsize=(3, 2))
 
         # extract bounds for confidence bands
-        tf = self.comparison_index
+        tf = self.comparison_index + 1
         lower, upper = self.lower[:tf], self.upper[:tf]
         t = self.t[:tf]
 
@@ -315,25 +330,25 @@ class ComparisonVis:
         max_error = self.compared.upper[self.dim][self.comparison_index]
 
         # add vertical arrow defining threshold value
-        ax.annotate(text='',
+        ax.annotate(s='',
                     xy=(peak_time, self.threshold),
                     xytext=(peak_time, peak_value),
                     arrowprops=dict(arrowstyle='<->', shrinkA=0, shrinkB=0))
 
         # add horizontal arrow defining commitment time
-        ax.annotate(text='',
+        ax.annotate(s='',
                     xy=(peak_time, self.threshold),
                     xytext=(comparison_time, self.threshold),
                     arrowprops=dict(arrowstyle='<->', shrinkA=0, shrinkB=0))
 
         # add vertical arrow defining error
-        ax.annotate(text='',
-                    xy=(2+comparison_time, self.threshold),
-                    xytext=(2+comparison_time, max_error),
-                    arrowprops=dict(arrowstyle='<->', shrinkA=0, shrinkB=0, color='r'))
+        ax.annotate(s='',
+                    xy=(1+comparison_time, self.threshold),
+                    xytext=(1+comparison_time, max_error),
+                    arrowprops=dict(arrowstyle='<->', shrinkA=0, shrinkB=0, color='k'))
 
         # annotate error
-        ax.text(comparison_time+4,
+        ax.text(comparison_time+1.5,
                 (self.threshold+max_error)/2,
                 'error',
                 ha='left',
