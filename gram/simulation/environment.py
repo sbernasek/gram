@@ -347,7 +347,7 @@ class ConditionSimulation(PerturbationSimulation):
         if 'seed' in skwargs.keys():
             seed = skwargs.pop('seed')
         else:
-            seed = int(start_time)
+            seed = None
 
         # run simulation and comparison
         self.simulate(seed=seed, **skwargs)
