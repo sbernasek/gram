@@ -1,9 +1,7 @@
 # external package imports
 
 # internal imports
-from ..analysis.comparison import Comparison, PromoterComparison
-from ..analysis.comparison import AreaComparison, CDFComparison
-from ..analysis.comparison import ThresholdComparison
+from ..analysis.comparison import Comparison, PromoterComparison, GaussianComparison
 from .pulse import PulseSimulation
 
 
@@ -118,10 +116,9 @@ class PerturbationSimulation(PulseSimulation):
             compared (genessa TimeSeries) - compared trajectories
 
             mode (str) - comparison type, options are:
-                empirical: fraction of trajectories below/above reference
-                area: fraction of confidence band area below/above reference
-                cdf: fraction of gaussian model below/above reference
-                threshold: fraction of gaussian model above threshold
+                empirical (default): fraction of trajectories outside reference confidence band
+                gaussian: fraction of gaussian model below/above reference confidence band
+                promoters: fraction of trajectories below reference at peak of expression
 
             horizon (float) - duration of comparison, 0 if unlimited
 
@@ -150,15 +147,11 @@ class PerturbationSimulation(PulseSimulation):
         compared = compared.crop(start, stop)
 
         # evaluate comparison
-        if mode == 'empirical' or mode is None:
-            comparison = Comparison(reference, compared, **kwargs)
-        elif mode == 'promoters':
+        if mode == 'promoters':
             comparison = PromoterComparison(reference, compared, **kwargs)
-        elif mode == 'area':
-            comparison = AreaComparison(reference, compared, **kwargs)
-        elif mode == 'cdf':
+        elif mode == 'gaussian':
             comparison = CDFComparison(reference, compared, **kwargs)
-        elif mode == 'threshold':
-            comparison = ThresholdComparison(reference, compared, **kwargs)
+        else:
+            comparison = Comparison(reference, compared, **kwargs)
 
         return comparison

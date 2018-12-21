@@ -154,12 +154,14 @@ class ComparisonProperties:
     @property
     def lower(self):
         """ Lower bound of reference. """
-        return self.reference.lower[self.dim]
+        q = (100-self.bandwidth)/2
+        return self.reference.evaluate_quantile(q)[self.dim]
 
     @property
     def upper(self):
         """ Upper bound of reference. """
-        return self.reference.upper[self.dim]
+        q = (100+self.bandwidth)/2
+        return self.reference.evaluate_quantile(q)[self.dim]
 
     @property
     def fractions_below(self):
@@ -393,13 +395,15 @@ class Comparison(ComparisonProperties, ComparisonMethods, ComparisonVis):
     """
     Base class for comparing a timeseries against a reference.
 
-    Comparison is based on evaluating the fraction of trajectories that lie above the highest or below the lowest reference trajectory.
+    Comparison is based on evaluating the fraction of trajectories that lie above or below the reference trajectory confidence band.
 
     Attributes:
 
         reference (TimeSeries) - reference timeseries
 
         compared (TimeSeries) - timeseries to be compared
+
+        bandwidth (float) - width of confidence band
 
         fraction_of_max (float) - fraction of peak mean reference value used to define commitment time
 
@@ -409,7 +413,7 @@ class Comparison(ComparisonProperties, ComparisonMethods, ComparisonVis):
 
         above (float) - fraction of confidence band above the reference
 
-        error (float) - total non-overalpping fraction of confidence band
+        error (float) - total non-overlapping fraction of confidence band
 
         below_threshold (float) - fraction below lower threshold
 
@@ -443,7 +447,10 @@ class Comparison(ComparisonProperties, ComparisonMethods, ComparisonVis):
 
     """
 
-    def __init__(self, reference, compared, fraction_of_max=0.3, dim=-1):
+    def __init__(self, reference, compared,
+                 bandwidth=98,
+                 fraction_of_max=0.3,
+                 dim=-1):
         """
         Instantiate timeseries comparison object.
 
@@ -452,6 +459,8 @@ class Comparison(ComparisonProperties, ComparisonMethods, ComparisonVis):
             reference (TimeSeries) - reference timeseries
 
             compared (TimeSeries) - timeseries to be compared
+
+            bandwidth (float) - width of confidence band, 0 to 100
 
             fraction_of_max (float) - fraction of peak mean reference value used to define commitment time
 
@@ -464,6 +473,7 @@ class Comparison(ComparisonProperties, ComparisonMethods, ComparisonVis):
         self.compared = compared
 
         # store attributes
+        self.bandwidth = bandwidth
         self.fraction_of_max = fraction_of_max
         self.dim = dim
         self.tstype = self.reference.__class__
@@ -524,8 +534,21 @@ class Comparison(ComparisonProperties, ComparisonMethods, ComparisonVis):
         t = self.t[t0: tf] - self.t[t0]
         t_normalized = t / t.max()
 
-        below = self.integrate(t_normalized, self.fractions_below[t0: tf])
-        above = self.integrate(t_normalized, self.fractions_above[t0: tf])
+        # determine correction factor
+        correction = (100-self.bandwidth)/2/100
+
+        # fraction below
+        fractions_below = self.fractions_below[t0: tf]
+        fractions_below -= correction
+        fractions_below[fractions_below<0] = 0
+
+        # fraction above
+        fractions_above = self.fractions_above[t0: tf]
+        fractions_above -= correction
+        fractions_above[fractions_above<0] = 0
+
+        below = self.integrate(t_normalized, fractions_below)
+        above = self.integrate(t_normalized, fractions_above)
 
         return below, above
 
@@ -540,119 +563,19 @@ class Comparison(ComparisonProperties, ComparisonMethods, ComparisonVis):
             above (float) - mean fraction of trajectories above the reference
 
         """
+
         below = self.fractions_below[self.comparison_index]
         above = self.fractions_above[self.comparison_index]
-        return below, above
+
+        # apply correction
+        correction = (100-self.bandwidth)/2/100
+        below -= correction
+        above -= correction
+
+        return max(below, 0), max(above, 0)
 
 
-class PromoterComparison(Comparison):
-    """
-    Comparison method for promoter perturbations.
-
-    Uses commitment time based on lower bound, and evaluates threshold at time of peak expression.
-    """
-
-    @property
-    def _comparison_index(self):
-        """ Index of time at which reference reaches threshold. """
-        indices = self.reference.index(self.threshold, self.dim, mode='lower')
-
-        if indices.size == 0 or indices[-1] == 0:
-            return None
-        else:
-            return indices[-1]
-
-    def evaluate_threshold(self):
-        """
-        Evaluate threshold comparison.
-
-        Returns:
-
-            below (float) - mean fraction of trajectories below the reference
-
-            above (float) - mean fraction of trajectories above the reference
-
-        """
-        below = self.fractions_below[self._peak_index]
-        above = self.fractions_above[self._peak_index]
-        return below, above
-
-
-class AreaComparison(Comparison):
-    """
-    Class for comparing a timeseries against a reference. Comparison is based on evaluating the fraction of the compared timeseries' confidence band that does not intersect with the reference timeseries' confidence band.
-
-
-    Inherited Attributes:
-
-        reference (TimeSeries) - reference timeseries
-
-        compared (TimeSeries) - timeseries to be compared
-
-        dim (int) - state space dimension to be compared
-
-        below (float) - fraction of confidence band below the reference
-
-        above (float) - fraction of confidence band above the reference
-
-        error (float) - total non-overalpping fraction of confidence band
-
-        tstype (type) - python class for timeseries objects
-
-    """
-
-    def __init__(self, reference, compared, dim=-1):
-        """
-        Instantiate timeseries comparison object.
-
-        Args:
-
-            reference (TimeSeries) - reference timeseries
-
-            compared (TimeSeries) - timeseries to be compared
-
-            dim (int) - state space dimension to be compared
-
-        """
-
-        # call parent instantiation (runs evaluation)
-        super().__init__(reference, compared, dim=dim)
-
-    def evaluate(self):
-        """
-        Evaluate comparison.
-
-        Returns:
-
-            below (float) - fraction of confidence band below the reference
-
-            above (float) - fraction of confidence band above the reference
-
-        """
-
-        # extract bounds for confidence bands
-        rbounds = (self.lower, self.upper)
-        cbounds = (self.compared.lower[self.dim],self.compared.upper[self.dim])
-
-        # extract regions above and below reference
-        ind_b, lbound_b, ubound_b = self.extract_region_below(rbounds, cbounds)
-        ind_a, lbound_a, ubound_a = self.extract_region_above(rbounds, cbounds)
-
-        # evalaute areas of non-overlapping regions of confidence band
-        area_b = self.integrate(self.compared.t, ubound_b-lbound_b, ind_b)
-        area_a = self.integrate(self.compared.t, ubound_a-lbound_a, ind_a)
-
-        # evaluate total area of confidence band
-        total_area = self.integrate(self.compared.t, cbounds[1]-cbounds[0])
-
-        # evaluate fraction of confidence band below and above reference
-        below = area_b/total_area
-        above = area_a/total_area
-
-        return below, above
-
-
-class CDFComparison(Comparison):
+class GaussianComparison(Comparison):
     """
     Class for comparing a timeseries against a reference. Comparison is based on evaluating the fraction of the compared timeseries that lies above or below the reference timeseries.
 
@@ -693,7 +616,7 @@ class CDFComparison(Comparison):
     def __init__(self,
                  reference,
                  compared,
-                 bandwidth=.98,
+                 bandwidth=98,
                  dim=-1):
         """
         Instantiate timeseries comparison object.
@@ -704,21 +627,31 @@ class CDFComparison(Comparison):
 
             compared (TimeSeries) - timeseries to be compared
 
-            bandwidth (float) - width of confidence band, 0 to 1
+            bandwidth (float) - width of confidence band, 0 to 100
 
             dim (int) - state space dimension to be compared
 
         """
 
         # fit gaussian models to timeseries
-        reference = GaussianModel.from_timeseries(reference, bandwidth)
-        compared = GaussianModel.from_timeseries(compared, bandwidth)
+        reference = GaussianModel.from_timeseries(reference, bandwidth/100)
+        compared = GaussianModel.from_timeseries(compared, bandwidth/100)
 
         # call parent instantiation (runs evaluation)
-        super().__init__(reference, compared, dim=dim)
+        super().__init__(reference, compared, bandwidth=bandwidth, dim=dim)
 
         # store timeseries kwargs
         self.tskwargs = dict(bandwidth=bandwidth)
+
+    @property
+    def lower(self):
+        """ Lower bound of reference. """
+        return self.reference.lower[self.dim]
+
+    @property
+    def upper(self):
+        """ Upper bound of reference. """
+        return self.reference.upper[self.dim]
 
     @property
     def fractions_below(self):
@@ -731,79 +664,26 @@ class CDFComparison(Comparison):
         return 1 - self.compared.norm.cdf(self.upper)[self.dim]
 
 
-class ThresholdComparison(CDFComparison):
+class PromoterComparison(Comparison):
     """
-    Class for comparing a timeseries against a reference. Comparison is based on evaluating the fraction of the compared timeseries that lies above a threshold defined relative to the reference timeseries.
+    Comparison method for promoter perturbations.
 
-    Inherited Attributes:
-
-        reference (GaussianModel) - reference timeseries
-
-        compared (GaussianModel) - timeseries to be compared
-
-        dim (int) - state space dimension to be compared
-
-        tstype (type) - python class for timeseries objects
-
-        tskwargs (dict) - keyword arguments for timeseries instantiation
-
-    Properties:
-
-        t (np.ndarray[float]) - reference timepoints
-
-        lower (np.ndarray[float]) - lower bound for reference trajectories
-
-        upper (np.ndarray[float]) - upper bound for reference trajectories
-
-        fractions_below (np.ndarray[float]) - fractions below lower bound
-
-        fractions_above (np.ndarray[float]) - fractions above upper bound
-
-        error (float) - fraction of trajectories exceeding threshold
-
+    Uses commitment time based on lower bound, and evaluates threshold at time of peak expression.
     """
 
-    def __init__(self,
-        reference,
-        compared,
-        fraction_of_max=0.3,
-        bandwidth=.98,
-        dim=-1):
+    @property
+    def _comparison_index(self):
+        """ Index of time at which reference reaches threshold. """
+        indices = self.reference.index(self.threshold, self.dim, mode='lower')
+
+        if indices.size == 0 or indices[-1] == 0:
+            return None
+        else:
+            return indices[-1]
+
+    def evaluate_threshold(self):
         """
-        Instantiate timeseries comparison object.
-
-        Args:
-
-            reference (TimeSeries) - reference timeseries
-
-            compared (TimeSeries) - timeseries to be compared
-
-            fraction_of_max (float) - fraction of peak mean reference value used as threshold
-
-            bandwidth (float) - width of confidence band, 0 to 1
-
-            dim (int) - state space dimension to be compared
-
-        """
-
-        # store attributes
-        self.dim = dim
-        self.fraction_of_max = fraction_of_max
-
-        # fit gaussian models to timeseries
-        self.reference = GaussianModel.from_timeseries(reference, bandwidth)
-        self.compared = GaussianModel.from_timeseries(compared, bandwidth)
-
-        # store timeseries type
-        self.tstype = self.reference.__class__
-        self.tskwargs = dict(bandwidth=bandwidth)
-
-        # evaluate comparison index and time
-        self.compare()
-
-    def evaluate(self):
-        """
-        Evaluate comparison.
+        Evaluate threshold comparison.
 
         Returns:
 
@@ -812,78 +692,6 @@ class ThresholdComparison(CDFComparison):
             above (float) - mean fraction of trajectories above the reference
 
         """
-        below = self.fractions_below[self.comparison_index]
-        above = self.fractions_above[self.comparison_index]
+        below = self.fractions_below[self._peak_index]
+        above = self.fractions_above[self._peak_index]
         return below, above
-
-    def plot_outlying_trajectories(self, alpha=0.5, ax=None):
-        """
-        Visualize comparison by shading the region encompassing trajectories that lie below or above all reference trajectories.
-
-        Args:
-
-            alpha (float) - opacity for shaded regions of confidence band
-
-            ax (matplotlib.axes.AxesSubplot) - if None, create figure
-
-        """
-
-        # create figure if axes weren't provided
-        if ax is None:
-            fig, ax = plt.subplots(figsize=(3, 2))
-
-        # extract bounds for confidence bands
-        rbounds = (self.lower, self.upper)
-        cbounds = (self.compared.lower[self.dim],self.compared.upper[self.dim])
-
-        # get indices of timepoints before threshold
-        ind = np.arange(self.t.size) < self.comparison_index
-        t = self.t[ind]
-        kw = dict(color='k', alpha=0.2)
-
-        # plot confidence band for reference
-        ax.fill_between(t, rbounds[0][ind], rbounds[1][ind], **kw)
-        ax.plot(t, rbounds[0][ind], '-k')
-        ax.plot(t, rbounds[1][ind], '-k')
-
-        # assemble segments of trajectories below/above reference extrema
-        segments_above = []
-        for x in self.compared.states[:, self.dim, ind]:
-            above = x > rbounds[1][ind]
-
-            # select outlying line segments
-            ind_a = np.split(np.arange(x.size), np.diff(above).nonzero()[0]+1)
-            ia = list(filter(lambda i: np.all(above[i]), ind_a))
-
-            # append line segments to lists
-            segments_above.extend([list(zip(self.t[i], x[i])) for i in ia])
-
-        # compile line objects
-        lines_above = LineCollection(segments_above, colors='r')
-        ax.add_collection(lines_above)
-        ax.set_xlim(0, self.t.max())
-        ax.set_ylim(0, self.compared.upper[self.dim].max())
-
-        # display threshold definition
-        self.display_threshold_definition(ax)
-
-        # format axis
-        self.format_axis(ax)
-
-    def display_metrics(self, ax):
-        """
-        Display comparison metrics on axes.
-
-        Args:
-
-            ax (matplotlib.axes.AxesSubplot)
-
-        """
-
-        x = ax.get_xlim()[1] - 0.05*ax.get_xticks().ptp()
-        y = ax.get_ylim()[1] - 0.05*ax.get_yticks().ptp()
-
-        kw = dict(ha='right', va='top')
-        ax.text(x, y, '{:0.1%} error'.format(self.error), **kw)
-
-
