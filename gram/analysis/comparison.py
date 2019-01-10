@@ -121,10 +121,15 @@ class ComparisonProperties:
         """ Reference timepoints. """
         return self.reference.t
 
+    # @property
+    # def threshold(self):
+    #     """ Commitment threshold. """
+    #     return self.reference.peaks[self.dim] * self.fraction_of_max
+
     @property
     def threshold(self):
         """ Commitment threshold. """
-        return self.reference.peaks[self.dim] * self.fraction_of_max
+        return self.upper[self._comparison_index]
 
     @property
     def _peak_index(self):
@@ -139,12 +144,26 @@ class ComparisonProperties:
     @property
     def _comparison_index(self):
         """ Index of time at which reference reaches threshold. """
-        indices = self.reference.index(self.threshold, self.dim, mode='upper')
 
+        # evaluate population mean at comparison time
+        final_mean = self.reference.peaks[self.dim] * self.fraction_of_max
+
+        # determine first time at which mean reaches final level
+        indices = self.reference.index(final_mean, self.dim, mode='mean')
         if indices.size == 0 or indices[-1] == 0:
             return None
         else:
             return indices[-1]
+
+    # @property
+    # def _comparison_index(self):
+    #     """ Index of time at which reference reaches threshold. """
+    #     indices = self.reference.index(self.threshold, self.dim, mode='upper')
+
+    #     if indices.size == 0 or indices[-1] == 0:
+    #         return None
+    #     else:
+    #         return indices[-1]
 
     @property
     def _comparison_time(self):
@@ -643,15 +662,27 @@ class GaussianComparison(Comparison):
         # store timeseries kwargs
         self.tskwargs = dict(bandwidth=bandwidth)
 
+    # @property
+    # def lower(self):
+    #     """ Lower bound of reference. """
+    #     return self.reference.lower[self.dim]
+
+    # @property
+    # def upper(self):
+    #     """ Upper bound of reference. """
+    #     return self.reference.upper[self.dim]
+
     @property
     def lower(self):
         """ Lower bound of reference. """
-        return self.reference.lower[self.dim]
+        q = (100-self.bandwidth)/2/100
+        return self.reference.norm.ppf(q)[self.dim]
 
     @property
     def upper(self):
         """ Upper bound of reference. """
-        return self.reference.upper[self.dim]
+        q = (100+self.bandwidth)/2/100
+        return self.reference.norm.ppf(q)[self.dim]
 
     @property
     def fractions_below(self):
