@@ -29,13 +29,6 @@ with open(args['path'], 'r') as batch_file:
           # run simulation and comparison
           simulation.run(skwargs=skwargs, ckwargs=ckwargs)
 
-          for condition, comparison in simulation.comparisons.items():
-               if comparison.comparison_time > 500:
-                    saveall = True
-                    break
-               else:
-                    saveall = False
-
           # save simulation
           simulation.save(path.strip(), saveall=saveall)
 
