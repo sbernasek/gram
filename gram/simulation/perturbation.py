@@ -1,7 +1,7 @@
 # external package imports
 
 # internal imports
-from ..analysis.comparison import Comparison, PromoterComparison, GaussianComparison
+from ..analysis.comparison import Comparison, PromoterComparison, GaussianComparison, MultiComparison
 from .pulse import PulseSimulation
 
 
@@ -151,6 +151,8 @@ class PerturbationSimulation(PulseSimulation):
             comparison = PromoterComparison(reference, compared, **kwargs)
         elif mode == 'gaussian':
             comparison = CDFComparison(reference, compared, **kwargs)
+        elif mode == 'multi':
+            comparison = MultiComparison(reference, compared, **kwargs)
         else:
             comparison = Comparison(reference, compared, **kwargs)
 

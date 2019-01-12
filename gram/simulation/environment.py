@@ -358,7 +358,7 @@ class ConditionSimulation(PerturbationSimulation):
         self.seed = seed
         self.complete = True
 
-    def plot_comparison(self, trajectories=False, axes=None):
+    def plot_comparison(self, trajectories=False, axes=None, threshold=-1):
         """
         Visualize comparison for each environmental condition.
 
@@ -367,6 +367,8 @@ class ConditionSimulation(PerturbationSimulation):
             trajectories (bool) - if True, plot individual trajectories
 
             axes (tuple) - matplotlib.axes.AxesSubplot for each condition
+
+            threshold (int) - index of threshold displayed
 
         """
 
@@ -387,7 +389,8 @@ class ConditionSimulation(PerturbationSimulation):
 
         # display error metrics on plot
         for i, comparison in enumerate(self.comparisons.values()):
-            comparison.display_metrics(axes[i])
+            if threshold is not None:
+                comparison.display_metrics(axes[i], threshold)
 
         axes[0].set_ylabel('Protein level')
 

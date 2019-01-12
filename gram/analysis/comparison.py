@@ -147,10 +147,11 @@ class ComparisonProperties:
 
         # evaluate population mean at comparison time
         final_mean = self.reference.peaks[self.dim] * self.fraction_of_max
+        peak_index = self.reference.peak_indices[self.dim]
 
         # determine first time at which mean reaches final level
         indices = self.reference.index(final_mean, self.dim, mode='mean')
-        if indices.size == 0 or indices[-1] == 0:
+        if indices.size == 0 or indices[-1] <= peak_index:
             return None
         else:
             return indices[-1]
@@ -233,6 +234,7 @@ class ComparisonVis:
 
         # extract bounds for confidence bands
         tf = self.comparison_index + 1
+
         t = self.t[:tf]
         rbounds = (self.lower[:tf], self.upper[:tf])
         cbounds = (self.compared.lower[self.dim][:tf],
@@ -390,7 +392,7 @@ class ComparisonVis:
         # display comparison metrics
         #self.display_metrics(ax)
 
-    def display_metrics(self, ax):
+    def display_metrics(self, ax, **kwargs):
         """
         Display comparison metrics on axes.
 
@@ -726,3 +728,323 @@ class PromoterComparison(Comparison):
         below = self.fractions_below[self._peak_index]
         above = self.fractions_above[self._peak_index]
         return below, above
+
+
+class MultiComparison(Comparison):
+
+    """
+    Class for making multiple comparisons of a timeseries against a reference.
+
+    Comparison is based on evaluating the fraction of trajectories that lie above or below the reference trajectory confidence band. Comparison is evaluated at multiple timepoints.
+
+    Attributes:
+
+        reference (TimeSeries) - reference timeseries
+
+        compared (TimeSeries) - timeseries to be compared
+
+        bandwidth (float) - width of confidence band
+
+        fraction_of_max (np.ndarray[float]) - fractions of peak mean reference value used to define commitment time
+
+        dim (int) - state space dimension to be compared
+
+        below (np.ndarray[float]) - fractions of confidence band below the reference
+
+        above (np.ndarray[float]) - fractions of confidence band above the reference
+
+        error (np.ndarray[float]) - total non-overlapping fraction of confidence band
+
+        below_threshold (np.ndarray[float]) - fraction below lower threshold
+
+        above_threshold (np.ndarray[float]) - fraction above upper threshold
+
+        threshold_error (np.ndarray[float]) - fraction outside thresholds
+
+        reached_comparison (np.ndarray[bool]) - if True, simulation reached comparison time
+
+        tstype (type) - python class for timeseries objects
+
+    Properties:
+
+        t (np.ndarray[float]) - reference timepoints
+
+        _peak_index (int) - time index of peak expression
+
+        _peak_time (float) - time of peak expression
+
+        _comparison_index (np.ndarray[int]) - time index of comparison
+
+        _comparison_time (np.ndarray[float]) - time of comparison
+
+        lower (np.ndarray[float]) - lower bound for reference trajectories
+
+        upper (np.ndarray[float]) - upper bound for reference trajectories
+
+        fractions_below (np.ndarray[float]) - fractions below lower bound
+
+        fractions_above (np.ndarray[float]) - fractions above upper bound
+
+    """
+
+    def __init__(self, reference, compared,
+                 bandwidth=98,
+                 dim=-1):
+        """
+        Instantiate timeseries multiple-comparison object.
+
+        Args:
+
+            reference (TimeSeries) - reference timeseries
+
+            compared (TimeSeries) - timeseries to be compared
+
+            bandwidth (float) - width of confidence band, 0 to 100
+
+            dim (int) - state space dimension to be compared
+
+        """
+
+        # store simulation trajectories
+        self.reference = reference
+        self.compared = compared
+
+        # store attributes
+        self.fraction_of_max = np.arange(0.1, 1., .1)[::-1]
+        self.bandwidth = bandwidth
+        self.dim = dim
+        self.tstype = self.reference.__class__
+
+        # evaluate comparison index and time
+        self.compare()
+
+    @property
+    def _comparison_index(self):
+        """ Index of time at which reference reaches threshold. """
+
+        # evaluate population means at comparison times
+        final_means = self.reference.peaks[self.dim] * self.fraction_of_max
+        peak_index = self.reference.peak_indices[self.dim]
+
+        def find_value(value):
+            """ Determine first time at which mean reaches <value>. """
+            indices = self.reference.index(value, self.dim, mode='mean')
+            if indices.size == 0 or indices[-1] <= peak_index:
+                return None
+            else:
+                return indices[-1]
+
+        return np.array([find_value(x) for x in final_means])
+
+    @property
+    def _comparison_time(self):
+        """ Time at which reference reaches threshold. """
+        return self.t[self.comparison_index]
+
+    def compare(self):
+        """ Run comparison procedure. """
+
+        # determine whether commitment threshold is reached
+        self.comparison_index = self._comparison_index
+        self.reached_comparison = (self.comparison_index != None)
+
+        comparison_time = []
+        below, above, error = [], [], []
+        below_threshold, above_threshold, threshold_error = [], [], []
+
+        for i, comparison_index in enumerate(self.comparison_index):
+
+            # evaluate comparison metric
+            if not self.reached_comparison[i]:
+                comparison_time.append(None)
+                below.append(None)
+                above.append(None)
+                error.append(None)
+                below_threshold.append(None)
+                above_threshold.append(None)
+                threshold_error.append(None)
+
+            else:
+                comparison_time.append(self.t[comparison_index])
+
+                # evaluate integrated error
+                b, a = self.evaluate(comparison_index, t0=0)
+                below.append(b)
+                above.append(a)
+                error.append(b+a)
+
+                # evaluate threshold error
+                bt, at = self.evaluate_threshold(comparison_index)
+                below_threshold.append(bt)
+                above_threshold.append(at)
+                threshold_error.append(bt + at)
+
+        self.comparison_time = np.array(comparison_time)
+        self.below = np.array(below)
+        self.above = np.array(above)
+        self.error = np.array(error)
+        self.below_threshold = np.array(below_threshold)
+        self.above_threshold = np.array(above_threshold)
+        self.threshold_error = np.array(threshold_error)
+
+    def evaluate(self, tf, t0=0):
+        """
+        Evaluate comparison.
+
+        Args:
+
+            tf (int) - time index for comparison
+
+            t0 (int) - time index for integration start
+
+        Returns:
+
+            below (float) - mean fraction of trajectories below the reference
+
+            above (float) - mean fraction of trajectories above the reference
+
+        """
+
+        # evalaute fractions below/above confidence band
+        t = self.t[t0: tf] - self.t[t0]
+        t_normalized = t / t.max()
+
+        # determine correction factor
+        correction = (100-self.bandwidth)/2/100
+
+        # fraction below
+        fractions_below = self.fractions_below[t0: tf]
+        fractions_below -= correction
+        fractions_below[fractions_below<0] = 0
+
+        # fraction above
+        fractions_above = self.fractions_above[t0: tf]
+        fractions_above -= correction
+        fractions_above[fractions_above<0] = 0
+
+        below = self.integrate(t_normalized, fractions_below)
+        above = self.integrate(t_normalized, fractions_above)
+
+        return below, above
+
+    def evaluate_threshold(self, comparison_index):
+        """
+        Evaluate comparison.
+
+        Args:
+
+            comparison_index (int) - time index for comparison
+
+        Returns:
+
+            below (float) - mean fraction of trajectories below the reference
+
+            above (float) - mean fraction of trajectories above the reference
+
+        """
+
+        below = self.fractions_below[comparison_index]
+        above = self.fractions_above[comparison_index]
+
+        # apply correction
+        correction = (100-self.bandwidth)/2/100
+        below -= correction
+        above -= correction
+
+        return max(below, 0), max(above, 0)
+
+    def shade_outlying_areas(self,
+                             alpha=0.2,
+                             reference_color='k',
+                             compared_color='k',
+                             above_color='r',
+                             above_alpha=0.5,
+                             below_color='b',
+                             below_alpha=0.5,
+                             ax=None,
+                             show_threshold=False):
+        """
+        Visualize comparison by shading the region encompassing trajectories that lie below or above all reference trajectories.
+
+        Args:
+
+            alpha (float) - opacity for shaded regions of confidence band
+
+            reference_color (str) - color for reference confidence band
+
+            compared_color (str) - color for compared confidence band
+
+            above_color, below_color (str) - colors for above/below reference
+
+            ax (matplotlib.axes.AxesSubplot) - if None, create figure
+
+            show_threshold (bool) - if True, show threshold definition
+
+        """
+
+        # create figure if axes weren't provided
+        if ax is None:
+            fig, ax = plt.subplots(figsize=(3, 2))
+
+        # extract bounds for confidence bands
+        threshold_index = self.reached_comparison.nonzero()[0][-1]
+        tf = self.comparison_index[threshold_index] + 1
+        t = self.t[:tf]
+        rbounds = (self.lower[:tf], self.upper[:tf])
+        cbounds = (self.compared.lower[self.dim][:tf],
+                   self.compared.upper[self.dim][:tf])
+
+        # plot confidence band for reference
+        ax.fill_between(t, *rbounds, color=reference_color, alpha=alpha)
+        ax.plot(t, rbounds[0], '-k')
+        ax.plot(t, rbounds[1], '-k')
+
+        # plot confidence band for compared
+        ax.fill_between(t, *cbounds, color=compared_color, alpha=alpha)
+        ax.plot(t, cbounds[0], '--k')
+        ax.plot(t, cbounds[1], '--k')
+
+        # shade regions below reference
+        ind_b, lbound_b, ubound_b = self.extract_region_below(rbounds, cbounds)
+        for ind in ind_b:
+            ax.fill_between(t[ind],
+                            lbound_b[ind],
+                            ubound_b[ind],
+                            color=below_color,
+                            alpha=below_alpha)
+
+        # shade regions above reference
+        ind_a, lbound_a, ubound_a = self.extract_region_above(rbounds, cbounds)
+        for ind in ind_a:
+            ax.fill_between(t[ind],
+                            lbound_a[ind],
+                            ubound_a[ind],
+                            color=above_color,
+                            alpha=above_alpha)
+
+        # display threshold definition
+        if show_threshold:
+            self.display_threshold_definition(ax)
+
+        # format axis
+        self.format_axis(ax)
+
+    def display_metrics(self, ax, threshold_index=-1):
+        """
+        Display comparison metrics on axes.
+
+        Args:
+
+            ax (matplotlib.axes.AxesSubplot)
+
+            threshold_index (int) - index of threshold used
+
+        """
+
+        x = ax.get_xlim()[1] - 0.05*ax.get_xticks().ptp()
+        y = ax.get_ylim()[1] - 0.05*ax.get_yticks().ptp()
+
+        kw = dict(ha='right', va='top', fontsize=8)
+        ax.text(x, y, '{:0.1%} error'.format(self.error[threshold_index]), **kw)
+        ax.text(x, y, '\n{:0.1%} above'.format(self.above[threshold_index]), color='r', **kw)
+        ax.text(x, y, '\n\n{:0.1%} below'.format(self.below[threshold_index]), color='b', **kw)
