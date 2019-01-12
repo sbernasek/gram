@@ -8,7 +8,7 @@ from ..models.hill import HillModel
 from ..models.twostate import TwoStateModel
 from ..models.simple import SimpleModel
 from .sampling import SobolLogSampler, SobolLinearSampler, DenseLinearSampler
-from .figure import SweepFigure
+from .figure import SweepFigure, SweepHistogram
 
 
 class Sweep(Batch):
@@ -190,6 +190,30 @@ class Sweep(Batch):
                            base=self.base,
                            delta=self.delta,
                            **kwargs)
+
+    def build_histogram(self,
+                     condition='normal',
+                     mode='error',
+                     relative=False):
+        """
+        Returns 1D histogram visualization of parameter sweep.
+
+        Args:
+
+            condition (str or tuple) - environmental condition
+
+            mode (str) - comparison metric
+
+            relative (bool) - if True, computes difference relative to normal
+
+        """
+
+        # evaluate results
+        results = self.results.loc[:, (condition, mode)]
+        if relative:
+            results = results - self.results.loc[:, ('normal', mode)]
+
+        return SweepHistogram(results.values)
 
 
 class SimpleSweep(Sweep):

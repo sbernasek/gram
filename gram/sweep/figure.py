@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mtick
 from matplotlib.gridspec import GridSpec
+from matplotlib.colors import Normalize
 from scipy.interpolate import griddata
 from ..figures.settings import *
 
@@ -498,3 +499,169 @@ class LinearSweepFigure(SweepFigure):
                 ax.set_xticks([])
                 ax.set_xticklabels([])
                 ax.xaxis.set_minor_locator(plt.FixedLocator([]))
+
+
+class SweepHistogram:
+    """
+    Class for visualizing the results of a parameter sweep of a model using a one dimensional histogram.
+
+    Attributes:
+
+        values (np.ndarray[float]) - values, length N
+
+        fig (matplotlib.figure.Figure)
+
+    Properties:
+
+        N (int) - number of parameter sets
+
+        ax (list) - axis
+
+    """
+
+    def __init__(self, values):
+        """
+        Instantiate parameter sweep visualization.
+
+        Args:
+
+            values (np.ndarray[float]) - values, length N
+
+        """
+        self.values = values
+
+    def save(self, fname, fmt='pdf', dpi=300, transparent=True):
+        """ Save figure as <fname>. """
+        self.fig.savefig(fname, format=fmt, dpi=dpi, transparent=transparent)
+
+    @property
+    def N(self):
+        """ Number of response values. """
+        return self.values.shape[0]
+
+    @staticmethod
+    def create_figure(figsize=(2, 1.25)):
+        """
+        Create figure for parameter sweep.
+
+        Args:
+
+            figsize (tuple) - figure size
+
+        Returns:
+
+            fig (matplotlib.figures.Figure)
+
+        """
+        fig, ax = plt.subplots(figsize=figsize, frameon=False)
+        return fig, ax
+
+    def render(self,
+               bins=20,
+               vlim=(-1, 1),
+               xlim=(-1, 1),
+               cmap=None,
+               log=True,
+               include_labels=True,
+               labelsize=7,
+               fig_kwargs={}):
+        """
+        Render parameter sweep figure.
+
+        Args:
+
+            bins (int or list) - histogram bins
+
+            vlim (tuple) - lower and upper bounds for colormap
+
+            xlim (tuple) - lower and upper bounds for response values
+
+            cmap (matplotlib.colormap) - colormap for bar facecolor
+
+            include_axis (bool) - if False, remove axes
+
+            include_labels (bool) - if False, remove axis labels
+
+            labelsize (int) - tick label size
+
+            fig_kwargs: keyword arguments for create_figure
+
+        """
+
+        # create figure
+        fig, ax = self.create_figure(**fig_kwargs)
+        self.fig = fig
+        self.ax = ax
+
+        # plot histogram
+        self.vlim = vlim
+        self.xlim = xlim
+        self.plot_histogram(bins, cmap)
+
+        # format axes
+        self.format_axes(log=log, include_labels=include_labels, labelsize=labelsize)
+
+    def plot_histogram(self, bins=50, cmap=None):
+        """
+        Plot histogram on axes.
+
+        Args:
+
+            bins (int or array like) - bins for histogram
+
+            cmap (matplotlib.colormap) - colormap for bar facecolor
+
+        """
+
+        if cmap is None:
+            cmap = plt.cm.seismic
+
+        # plot histogram
+        bins = np.linspace(*self.xlim, num=bins)
+        counts, edges, patches = self.ax.hist(self.values,
+                                     bins=bins,
+                                     density=False,
+                                     color='k')
+        _ = self.ax.hist(self.values,
+                         bins=bins,
+                         density=False,
+                         color='k',
+                         lw=0.25,
+                         histtype='step')
+        bin_centers = 0.5 * (edges[:-1] + edges[1:])
+
+        # color bars
+        norm = Normalize(*self.vlim)
+        for c, p in zip(bin_centers, patches):
+            plt.setp(p, 'facecolor', cmap(norm(c)))
+
+    def format_axes(self, log=True, include_labels=True, labelsize=7):
+        """
+        Format histogram axis.
+
+        Args:
+
+            log (bool) - if True, logscale y axis
+
+            include_labels (bool) - if False, remove labels
+
+            labelsize (int) - label font size
+
+        """
+
+        # set axis limits and scale
+        self.ax.set_xlim(*self.xlim)
+        if log:
+            self.ax.set_yscale('log')
+
+        # format axes
+        self.ax.spines['right'].set_visible(False)
+        self.ax.spines['top'].set_visible(False)
+
+        # label axes
+        if include_labels:
+            self.ax.set_ylabel('Num. parameter sets', fontsize=labelsize)
+            self.ax.set_xticklabels(['{:.0%}'.format(x) for x in self.ax.get_xticks()], fontsize=labelsize)
+        else:
+            self.ax.set_yticks([])
+            self.ax.set_xticks([])
