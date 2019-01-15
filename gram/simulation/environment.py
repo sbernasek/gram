@@ -102,6 +102,7 @@ class ConditionSimulation(PerturbationSimulation):
         # set condition names
         self.condition_names = dict(normal='Normal',
                                   diabetic='Reduced Metabolism',
+                                  carbon_limited='Carbon Limited',
                                   minute='Reduced Translation',
                                   half_growth='Halved Growth Rate')
 
@@ -390,7 +391,7 @@ class ConditionSimulation(PerturbationSimulation):
         # display error metrics on plot
         for i, comparison in enumerate(self.comparisons.values()):
             if threshold is not None:
-                comparison.display_metrics(axes[i], threshold)
+                comparison.display_metrics(axes[i], threshold_index=threshold)
 
         axes[0].set_ylabel('Protein level')
 

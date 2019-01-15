@@ -601,7 +601,7 @@ class SweepHistogram:
         # format axes
         self.format_axes(log=log, include_labels=include_labels, labelsize=labelsize)
 
-    def plot_histogram(self, bins=50, cmap=None):
+    def plot_histogram(self, bins=50, cmap=None, rasterized=True):
         """
         Plot histogram on axes.
 
@@ -627,7 +627,8 @@ class SweepHistogram:
                          density=False,
                          color='k',
                          lw=0.25,
-                         histtype='step')
+                         histtype='step',
+                         rasterized=rasterized)
         bin_centers = 0.5 * (edges[:-1] + edges[1:])
 
         # color bars
@@ -652,7 +653,7 @@ class SweepHistogram:
         # set axis limits and scale
         self.ax.set_xlim(*self.xlim)
         if log:
-            self.ax.set_yscale('log')
+            self.ax.set_yscale('symlog', linthreshy=1)
 
         # format axes
         self.ax.spines['right'].set_visible(False)

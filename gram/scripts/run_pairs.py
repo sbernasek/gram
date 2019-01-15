@@ -4,10 +4,12 @@ from gram.models.linear import LinearModel
 from gram.simulation.environment import ConditionSimulation
 
 
-N = 10
+N = 5000
+
+conditions = ('normal', 'diabetic', 'minute', 'carbon_limited')
 
 # define feedback strengths
-eta = (1e-4, 1e-4, 1e-4)
+eta = (5e-4, 1e-4, 5e-4)
 
 # run pairwise simulations
 simulations = {}
@@ -27,7 +29,7 @@ for i in range(3):
 
         # run simulation
         sim = ConditionSimulation(model)
-        sim.run(skwargs=dict(N=N))
+        sim.run(skwargs=dict(N=N, conditions=conditions))
         simulations[(i, j)] = sim
 
 # save simulations

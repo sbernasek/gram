@@ -88,7 +88,8 @@ class HillModel(HillCell, Mutation):
     def add_post_transcriptional_feedback(self,
                                      k=None,
                                      atp_sensitive=2,
-                                     ribosome_sensitive=True,
+                                     carbon_sensitive=2,
+                                     ribosome_sensitive=1,
                                      **kwargs):
         """
         Adds linear negative feedback applied to transcript level.
@@ -99,7 +100,9 @@ class HillModel(HillCell, Mutation):
 
             atp_sensitive (int) - order of metabolism dependence
 
-            ribosome_sensitive (bool) - scale rate parameter with ribosomes
+            carbon_sensitive (int) - order of carbon availability dependence
+
+            ribosome_sensitive (int) - order of ribosome dependence
 
             kwargs: keyword arguments for reaction
 
@@ -111,13 +114,15 @@ class HillModel(HillCell, Mutation):
              mode='transcript',
              k=k,
              atp_sensitive=atp_sensitive,
+             carbon_sensitive=carbon_sensitive,
              ribosome_sensitive=ribosome_sensitive,
              **kwargs)
 
     def add_post_translational_feedback(self,
                                      k=None,
                                      atp_sensitive=2,
-                                     ribosome_sensitive=True,
+                                     carbon_sensitive=2,
+                                     ribosome_sensitive=1,
                                      **kwargs):
         """
         Adds linear negative feedback applied to protein level.
@@ -128,7 +133,9 @@ class HillModel(HillCell, Mutation):
 
             atp_sensitive (int) - order of metabolism dependence
 
-            ribosome_sensitive (bool) - scale rate parameter with ribosomes
+            carbon_sensitive (int) - order of carbon availability dependence
+
+            ribosome_sensitive (int) - order of ribosome dependence
 
             kwargs: keyword arguments for reaction
 
@@ -140,6 +147,7 @@ class HillModel(HillCell, Mutation):
              mode='protein',
              k=k,
              atp_sensitive=atp_sensitive,
+             carbon_sensitive=carbon_sensitive,
              ribosome_sensitive=ribosome_sensitive,
              **kwargs)
 

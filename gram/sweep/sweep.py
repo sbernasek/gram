@@ -103,22 +103,40 @@ class Sweep(Batch):
             self.completed.to_hdf(p, 'completed', mode='a')
 
     @staticmethod
-    def parse_simulation(simulation):
+    def parse_simulation(simulation, index=-3):
         """ Returns over, under, and total error from <simulation>. """
         if simulation.comparisons is None:
             return False
         else:
             errors = {}
             for c, comparison in simulation.comparisons.items():
+                failed = False
 
-                if comparison.reached_comparison:
-                    errors[(c, 'above')] = comparison.above
-                    errors[(c, 'below')] = comparison.below
-                    errors[(c, 'error')] = comparison.error
-                    errors[(c, 'above_threshold')] = comparison.above_threshold
-                    errors[(c, 'below_threshold')] = comparison.below_threshold
-                    errors[(c, 'threshold_error')] = comparison.threshold_error
+                if comparison.__class__.__name__ == 'MultiComparison':
+
+                    if True in comparison.reached_comparison:
+                        errors[(c, 'above')] = comparison.above[index]
+                        errors[(c, 'below')] = comparison.below[index]
+                        errors[(c, 'error')] = comparison.error[index]
+                        errors[(c, 'above_threshold')] = comparison.above_threshold[index]
+                        errors[(c, 'below_threshold')] = comparison.below_threshold[index]
+                        errors[(c, 'threshold_error')] = comparison.threshold_error[index]
+                    else:
+                        failed = True
+
                 else:
+
+                    if comparison.reached_comparison:
+                        errors[(c, 'above')] = comparison.above
+                        errors[(c, 'below')] = comparison.below
+                        errors[(c, 'error')] = comparison.error
+                        errors[(c, 'above_threshold')] = comparison.above_threshold
+                        errors[(c, 'below_threshold')] = comparison.below_threshold
+                        errors[(c, 'threshold_error')] = comparison.threshold_error
+                    else:
+                        failed = True
+
+                if failed:
                     fail = None
                     errors[(c, 'above')] = fail
                     errors[(c, 'below')] = fail
