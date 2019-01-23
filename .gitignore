@@ -5,5 +5,4 @@ test/
 notebooks_private/*
 *.pyc
 *.prof
-*.ipynb
 *.egg-info
