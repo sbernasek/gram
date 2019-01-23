@@ -10,9 +10,9 @@ This repository and its dependencies contain all of the code necessary to reprod
 Supporting Data
 ===============
 
-  * [Simulation Results](DATA REPOSITORY) - complete output from each of our simulations.
+[Simulation Results](DATA REPOSITORY) - complete output from each of our simulations.
 
-  * [Yan Expression](DATA REPOSITORY) - segmented and annotated $YanYFP$ and $Yan^{\delta miR7}YFP$ eye discs from animals raised under normal metabolic conditions and in animals subject to IPC ablation.
+[Yan Expression](DATA REPOSITORY) - segmented and annotated $YanYFP$ and $Yan^{\delta miR7}YFP$ eye discs from animals raised under normal metabolic conditions and in animals subject to IPC ablation.
 
 
 Installation
@@ -29,13 +29,13 @@ System Requirements
  - [Pandas](https://pandas.pydata.org/)
  - [Matplotlib](https://matplotlib.org/)
  - [GeneSSA](https://github.com/sebastianbernasek/genessa)
- - [FlyEye Analysis](file:///Users/Sebi/Documents/grad_school/research/flyeye/flyeye/docs/index.html)
+ - [FlyEye Analysis](https://github.com/sebastianbernasek/flyeye)
 
 
 Install GRaM
 ------------
 
-Download the [latest distribution](https://github.com/sebastianbernasek/genessa/archive/v0.1.tar.gz).
+Download the [latest distribution](https://github.com/sebastianbernasek/GRaM/blob/master/dist/gram-0.1.tar.gz).
 
 The simplest method is to install it via ``pip``:
 
@@ -90,13 +90,13 @@ The GRaM package contains several python scripts in ``gram/scripts``. Those that
 Jupyter Notebooks
 -----------------
 
-  * ``Parameter Sweeps (Figs. S1-S4).ipynb`` walks the user through conducting a parameter sweep and visualizing the results. This notebook facilitates direct reproduction of Figures S1-S4 in our manuscript.
+  * [ParameterSweeps.ipynb](https://github.com/sebastianbernasek/GRaM/blob/master/notebooks/Parameter%20Sweeps%20(Figs.%20S1-S4).ipynb) walks the user through conducting a parameter sweep and visualizing the results. This notebook facilitates direct reproduction of Figures S1-S4 in our manuscript.
 
-  * ``Repressor Pairs (Figs. 4G, 7A, and S2H).ipynb`` walk the user through conducting and analyzing simulations in which one of a pair of repressors is removed. This notebook facilitates direct reproduction of Figures 4G, 7A, and S2H in our manuscript.
+  * [RepressorPairs.ipynb]() walk the user through conducting and analyzing simulations in which one of a pair of repressors is removed. This notebook facilitates direct reproduction of Figures 4G, 7A, and S2H in our manuscript.
 
-  * ``Yan Expression Dynamics (Fig. 5).ipynb`` walks the user through our exploration of YanYFP expression dynamics in silico and in vivo. This notebooks enables reproduction of Figure 5 in our manuscript.
+  * [YanExpressionDynamics.ipynb]() walks the user through our exploration of YanYFP expression dynamics in silico and in vivo. This notebooks enables reproduction of Figure 5 in our manuscript.
 
-  * ``YanACT Simulations (Figs. 6A,B).ipynb`` walks the user through simulating an example scenario in which all repressors are removed. This notebooks enables reproduction of Figures 6A and 6B in our manuscript.
+  * [YanACTSimulations.ipynb]() walks the user through simulating an example scenario in which all repressors are removed. This notebooks enables reproduction of Figures 6A and 6B in our manuscript.
 
 
 
