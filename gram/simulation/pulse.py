@@ -203,7 +203,7 @@ class PulseSimulation:
                  cell,
                  signal,
                  condition='normal',
-                 N=100,
+                 N=5000,
                  seed=None,
                  debug=False):
         """

@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as mtick
 from matplotlib.gridspec import GridSpec
 from matplotlib.colors import Normalize
+from matplotlib.collections import LineCollection
 from scipy.interpolate import griddata
 from ..figures.settings import *
 
@@ -596,12 +597,12 @@ class SweepHistogram:
         # plot histogram
         self.vlim = vlim
         self.xlim = xlim
-        self.plot_histogram(bins, cmap)
+        self.plot(bins, cmap)
 
         # format axes
         self.format_axes(log=log, include_labels=include_labels, labelsize=labelsize)
 
-    def plot_histogram(self, bins=50, cmap=None, rasterized=True):
+    def plot(self, bins=50, cmap=None, rasterized=True):
         """
         Plot histogram on axes.
 
@@ -610,6 +611,8 @@ class SweepHistogram:
             bins (int or array like) - bins for histogram
 
             cmap (matplotlib.colormap) - colormap for bar facecolor
+
+            rasterized (bool) - if True, rasterize bars
 
         """
 
@@ -663,6 +666,147 @@ class SweepHistogram:
         if include_labels:
             self.ax.set_ylabel('Num. parameter sets', fontsize=labelsize)
             self.ax.set_xticklabels(['{:.0%}'.format(x) for x in self.ax.get_xticks()], fontsize=labelsize)
+        else:
+            self.ax.set_yticks([])
+            self.ax.set_xticks([])
+
+
+class SweepLines(SweepHistogram):
+    """
+    Class for visualizing the results of a parameter sweep as a function of where the success threshold is set.
+
+    Attributes:
+
+        values (np.ndarray[float]) - values, length N
+
+        thresholds (np.ndarray[float]) - fractions of peak level
+
+        fig (matplotlib.figure.Figure)
+
+    Properties:
+
+        N (int) - number of parameter sets
+
+        ax (list) - axis
+
+    """
+
+    def __init__(self, values, thresholds):
+        """
+        Instantiate parameter sweep visualization.
+
+        Args:
+
+            values (np.ndarray[float]) - values, length N
+
+            thresholds (np.ndarray[float]) - fractions of peak level
+
+        """
+        self.values = values
+        self.thresholds = thresholds
+
+    def render(self,
+               vlim=(-1, 1),
+               ylim=(-1, 1),
+               cmap=None,
+               include_labels=True,
+               labelsize=7,
+               fig_kwargs={}):
+        """
+        Render parameter sweep figure.
+
+        Args:
+
+            vlim (tuple) - lower and upper bounds for colormap
+
+            ylim (tuple) - lower and upper bounds for response values
+
+            cmap (matplotlib.colormap) - colormap for bar facecolor
+
+            include_axis (bool) - if False, remove axes
+
+            include_labels (bool) - if False, remove axis labels
+
+            labelsize (int) - tick label size
+
+            fig_kwargs: keyword arguments for create_figure
+
+        """
+
+        # create figure
+        fig, ax = self.create_figure(**fig_kwargs)
+        self.fig = fig
+        self.ax = ax
+
+        # plot histogram
+        self.vlim = vlim
+        self.ylim = ylim
+        self.plot(cmap)
+
+        # format axes
+        self.format_axes(include_labels=include_labels, labelsize=labelsize)
+
+    def plot(self, cmap=None, rasterized=True):
+        """
+        Plot histogram on axes.
+
+        Args:
+
+            cmap (matplotlib.colormap) - colormap for bar facecolor
+
+            rasterized (bool) - if True, rasterize lines
+
+        """
+
+        if cmap is None:
+            cmap = plt.cm.OrRd
+
+        # sort line order by difference over range
+        ptp = np.nanmax(self.values, axis=1) - np.nanmin(self.values, axis=1)
+        ptp /= np.nanmax(ptp)
+        sort_ind = np.argsort(ptp)
+        values = self.values[sort_ind]
+
+        # compile lines
+        thresholds = np.tile(self.thresholds, (self.values.shape[0], 1))
+        line_data = np.swapaxes(np.stack((thresholds, values)).T, 0, 1)
+        lines = LineCollection(line_data,
+                               linewidth=0.5,
+                               alpha=1.,
+                               colors=cmap(ptp[sort_ind]),
+                               rasterized=rasterized)
+
+        # add lines to axis
+        self.ax.add_collection(lines)
+
+    def format_axes(self, include_labels=True, labelsize=7):
+        """
+        Format histogram axis.
+
+        Args:
+
+            include_labels (bool) - if False, remove labels
+
+            labelsize (int) - label font size
+
+        """
+
+        # set axis limits and scale
+        self.ax.invert_xaxis()
+        self.ax.set_ylim(*self.ylim)
+        self.ax.set_xlim(max(self.thresholds), min(self.thresholds))
+        self.ax.set_xticks(self.thresholds)
+
+        # format axes
+        self.ax.spines['right'].set_visible(False)
+        self.ax.spines['top'].set_visible(False)
+
+        # label axes
+        if include_labels:
+            self.ax.set_ylabel('Error frequency', fontsize=labelsize)
+            self.ax.set_xlabel('Threshold position\n(fraction of peak mean value)', fontsize=labelsize)
+            self.ax.set_xticklabels(['{:0.1f}'.format(x) for x in self.ax.get_xticks()], fontsize=labelsize)
+            self.ax.set_yticklabels(['{:2.0%}'.format(x) for x in self.ax.get_yticks()], fontsize=labelsize)
         else:
             self.ax.set_yticks([])
             self.ax.set_xticks([])

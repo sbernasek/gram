@@ -67,7 +67,7 @@ class PerturbationSimulation(PulseSimulation):
         # apply perturbation to generate mutant
         self.mutant = self.cell.perturb()
 
-    def simulate(self, condition='normal', N=100, seed=None, debug=False):
+    def simulate(self, condition='normal', N=5000, seed=None, debug=False):
         """
         Run simulation under the specified conditions.
 

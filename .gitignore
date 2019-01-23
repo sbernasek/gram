@@ -2,7 +2,7 @@ testing/
 build/
 dist/*.egg
 test/
-notebooks/*
+notebooks_private/*
 *.pyc
 *.prof
 *.ipynb

@@ -98,4 +98,4 @@ For examples demonstrating the analysis of protein expression in the Drosophila 
 Additional Questions
 --------------------
 
-Please contact the [Amaral Lab] with any questions regarding GRaM, GeneSSA, or the FlyEye suite. We will make an effort to get back to you within a reasonable timeframe.
+Please contact the [Amaral Lab](https://amaral.northwestern.edu/) with any questions regarding GRaM, GeneSSA, or the FlyEye suite. We will make an effort to get back to you within a reasonable timeframe.

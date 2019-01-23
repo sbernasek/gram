@@ -8,7 +8,7 @@ from ..models.hill import HillModel
 from ..models.twostate import TwoStateModel
 from ..models.simple import SimpleModel
 from .sampling import SobolLogSampler, SobolLinearSampler, DenseLinearSampler
-from .figure import SweepFigure, SweepHistogram
+from .figure import SweepFigure, SweepHistogram, SweepLines
 
 
 class Sweep(Batch):
@@ -232,6 +232,43 @@ class Sweep(Batch):
             results = results - self.results.loc[:, ('normal', mode)]
 
         return SweepHistogram(results.values)
+
+    def build_lines(self,
+                     condition='normal',
+                     mode='error',
+                     relative=False):
+        """
+        Returns line projection of parameter sweep as a function of where the success threshold is set.
+
+        Args:
+
+            condition (str or tuple) - environmental condition
+
+            mode (str) - comparison metric
+
+            relative (bool) - if True, computes difference relative to normal
+
+        """
+
+        get_error = lambda x: x.error if mode == 'error' else x.threshold_error
+        parse_sim = lambda sim: get_error(sim.comparisons[condition])
+
+        # evaluate results then replace None values with NaN
+        values = np.array([parse_sim(sim) for sim in self])
+        values[(values==None)] = np.nan
+        values = values.astype(float)
+
+        if relative:
+            parse_normal = lambda sim: get_error(sim.comparisons['normal'])
+            reference_values = np.array([parse_normal(sim) for sim in self])
+            reference_values[(reference_values==None)] = np.nan
+            reference_values = reference_values.astype(float)
+            values = reference_values - values
+
+        # get threshold positions
+        fractions_of_max = self[0].comparisons['normal'].fraction_of_max
+
+        return SweepLines(values, fractions_of_max)
 
 
 class SimpleSweep(Sweep):

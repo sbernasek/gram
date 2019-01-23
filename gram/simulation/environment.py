@@ -236,7 +236,7 @@ class ConditionSimulation(PerturbationSimulation):
         super().save(join(path, 'simulation.pkl'))
 
     def simulate(self,
-                 N=1000,
+                 N=5000,
                  conditions=None,
                  seed=None,
                  inplace=True,
