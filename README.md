@@ -90,13 +90,13 @@ The GRaM package contains several python scripts in ``gram/scripts``. Those that
 Jupyter Notebooks
 -----------------
 
-  * [ParameterSweeps.ipynb](https://github.com/sebastianbernasek/GRaM/blob/master/notebooks/Parameter%20Sweeps%20(Figs.%20S1-S4).ipynb) walks the user through conducting a parameter sweep and visualizing the results. This notebook facilitates direct reproduction of Figures S1-S4 in our manuscript.
+  * [ParameterSweeps.ipynb](https://github.com/sebastianbernasek/GRaM/blob/master/notebooks/ParameterSweeps.ipynb) walks the user through conducting a parameter sweep and visualizing the results. This notebook facilitates direct reproduction of Figures S1-S4 in our manuscript.
 
-  * [RepressorPairs.ipynb]() walk the user through conducting and analyzing simulations in which one of a pair of repressors is removed. This notebook facilitates direct reproduction of Figures 4G, 7A, and S2H in our manuscript.
+  * [RepressorPairs.ipynb](https://github.com/sebastianbernasek/GRaM/blob/master/notebooks/RepressorPairs.ipynb) walk the user through conducting and analyzing simulations in which one of a pair of repressors is removed. This notebook facilitates direct reproduction of Figures 4G, 7A, and S2H in our manuscript.
 
-  * [YanExpressionDynamics.ipynb]() walks the user through our exploration of YanYFP expression dynamics in silico and in vivo. This notebooks enables reproduction of Figure 5 in our manuscript.
+  * [YanExpressionDynamics.ipynb](https://github.com/sebastianbernasek/GRaM/blob/master/notebooks/YanExpressionDynamics.ipynb) walks the user through our exploration of YanYFP expression dynamics in silico and in vivo. This notebooks enables reproduction of Figure 5 in our manuscript.
 
-  * [YanACTSimulations.ipynb]() walks the user through simulating an example scenario in which all repressors are removed. This notebooks enables reproduction of Figures 6A and 6B in our manuscript.
+  * [YanACTSimulations.ipynb](https://github.com/sebastianbernasek/GRaM/blob/master/notebooks/YanACTSimulations.ipynb) walks the user through simulating an example scenario in which all repressors are removed. This notebooks enables reproduction of Figures 6A and 6B in our manuscript.
 
 
 
