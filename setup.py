@@ -3,7 +3,7 @@ from setuptools import find_packages
 
 setup(
     name='gram',
-    version='0.1',
+    version='1.0',
     author='Sebastian Bernasek',
     author_email='sebastian@u.northwestern.com',
     packages=find_packages(exclude=('tests',)),

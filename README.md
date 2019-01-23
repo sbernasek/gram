@@ -35,11 +35,11 @@ System Requirements
 Install GRaM
 ------------
 
-Download the [latest distribution](https://github.com/sebastianbernasek/GRaM/blob/master/dist/gram-0.1.tar.gz).
+Download the [latest distribution](https://github.com/sebastianbernasek/gram/archive/v1.0.tar.gz).
 
 The simplest method is to install it via ``pip``:
 
-    pip install gram-0.1.tar.gz
+    pip install gram-1.0.tar.gz
 
 
 Reproducing our Results
