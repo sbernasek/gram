@@ -4,6 +4,7 @@ Overview
 This repository and its dependencies contain all of the code necessary to reproduce our study of the relationship between Gene Regulation and Metabolism (GRaM). The code offers two primary functions:
 
   1. Running the simulations described in our manuscript. In general, these simulations probe pulse response sensitivity to gene regulatory network (GRN) perturbations under a variety of different metabolic conditions. *GRaM* provides the tools necessary to set up each of these simulations and analyze the resultant dynamics. The simulations themselves are performed by our stochastic simulation package, [GeneSSA](https://github.com/sebastianbernasek/genessa).
+
   2. Quantifying Yan protein expression dynamics in the Drosophila eye. Yan level measurements were extracted from confocal microscopy data using [FlyEye Silhouette](http://www.silhouette.amaral.northwestern.edu/), our macOS platform for eye cell segmentation and annotation. The annotated `.silhouette` files are available in our [data repository](https://arch.library.northwestern.edu/concern/generic_works/n296wz31t?locale=en). We analyzed these measurements using [FlyEye Analysis](https://github.com/sebastianbernasek/flyeye), our pipeline for analyzing FlyEye Silhouette data.
 
 
@@ -12,9 +13,9 @@ Supporting Data
 
 Supporting data are publicly available for [download](https://arch.library.northwestern.edu/concern/generic_works/n296wz31t?locale=en). Two files are required to reproduce our results:
 
-1. *simulations.zip (~30 MB)* contains the completed output from each of our simulations.
+**simulations.zip** (~30 MB) contains the completed output from each of our simulations.
 
-2. *measurements.zip (~1.4 GB)* contains segmented and annotated $YanYFP$ and $Yan^{\delta miR7}YFP$ eye discs from animals raised under normal metabolic conditions and in animals subject to IPC ablation.
+**measurements.zip** (~1.4 GB) contains segmented and annotated $YanYFP$ and $Yan^{\delta miR7}YFP$ eye discs from animals raised under normal metabolic conditions and in animals subject to IPC ablation.
 
 Download each of these files, then unzip their contents to a common directory. In order to successfully run the provided Jupyter notebooks you will need to point the ``../data`` filepath toward this directory.
 
