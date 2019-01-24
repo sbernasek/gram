@@ -19,7 +19,7 @@ As an alternative, we have also provided the output from all of our [completed s
 Supporting Data
 ---------------
 
-Supporting data are publicly available for [download](https://arch.library.northwestern.edu/concern/generic_works/n296wz31t?locale=en). Two files are required to reproduce our results:
+Our data repository contains the two files needed to reproduce our results:
 
 [simulations.zip](https://arch.library.northwestern.edu/concern/parent/n296wz31t/file_sets/8c97kq60n) (~30 MB) contains the completed output from each of our simulations.
 
