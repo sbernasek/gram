@@ -1,8 +1,9 @@
+
+data/*
 testing/
 build/
 dist/*.egg
-test/
-notebooks/ipynb_checkpoints/*
+notebooks/.ipynb_checkpoints/*
 notebooks_private/*
 *.pyc
 *.prof

@@ -4,15 +4,19 @@ Overview
 This repository and its dependencies contain all of the code necessary to reproduce our study of the relationship between Gene Regulation and Metabolism (GRaM). The code offers two primary functions:
 
   1. Running the simulations described in our manuscript. In general, these simulations probe pulse response sensitivity to gene regulatory network (GRN) perturbations under a variety of different metabolic conditions. *GRaM* provides the tools necessary to set up each of these simulations and analyze the resultant dynamics. The simulations themselves are performed by our stochastic simulation package, [GeneSSA](https://github.com/sebastianbernasek/genessa).
-  2. Quantifying Yan protein expression dynamics in the Drosophila eye. Yan level measurements were extracted from confocal microscopy data using [FlyEye Silhouette](http://www.silhouette.amaral.northwestern.edu/), our macOS platform for eye cell segmentation and annotation. The annotated `.silhouette` files are available in our [data repository](DATA REPOSITORY). We analyzed these measurements using [FlyEye Analysis](https://github.com/sebastianbernasek/flyeye), our pipeline for analyzing FlyEye Silhouette data.
+  2. Quantifying Yan protein expression dynamics in the Drosophila eye. Yan level measurements were extracted from confocal microscopy data using [FlyEye Silhouette](http://www.silhouette.amaral.northwestern.edu/), our macOS platform for eye cell segmentation and annotation. The annotated `.silhouette` files are available in our [data repository](https://arch.library.northwestern.edu/concern/generic_works/n296wz31t?locale=en). We analyzed these measurements using [FlyEye Analysis](https://github.com/sebastianbernasek/flyeye), our pipeline for analyzing FlyEye Silhouette data.
 
 
 Supporting Data
 ===============
 
-[Simulation Results](DATA REPOSITORY) - complete output from each of our simulations.
+Supporting data are publicly available for [download](https://arch.library.northwestern.edu/concern/generic_works/n296wz31t?locale=en). Two files are required to reproduce our results:
 
-[Yan Expression](DATA REPOSITORY) - segmented and annotated $YanYFP$ and $Yan^{\delta miR7}YFP$ eye discs from animals raised under normal metabolic conditions and in animals subject to IPC ablation.
+1. *simulations.zip (~30 MB)* contains the completed output from each of our simulations.
+
+2. *measurements.zip (~1.4 GB)* contains segmented and annotated $YanYFP$ and $Yan^{\delta miR7}YFP$ eye discs from animals raised under normal metabolic conditions and in animals subject to IPC ablation.
+
+Download each of these files, then unzip their contents to a common directory. In order to successfully run the provided Jupyter notebooks you will need to point the ``../data`` filepath toward this directory.
 
 
 Installation
@@ -47,7 +51,7 @@ Reproducing our Results
 
 This repository contains all of the code used to generate the content in our manuscript. However, please note that the vast majority of our figures are based on large-scale simulations that were executed on a high performance computing cluster. These simulations are therefore not well suited for reproduction on a personal computer. While we have provided the scripts necessary to reproduce all of our results, their direct execution would be impractical.
 
-As an alternative, we have provided the output from all of our [completed simulations](DATA REPOSITORY) along with a series of [Jupyter notebooks](https://github.com/sebastianbernasek/GRaM/tree/master/notebooks) that walk the user through the steps necessary to analyze these results and reproduce each of our figures. The notebooks also provide users with an opportunity to set up and execute each type of simulation that appears in our manuscript. We leave it to the user to design a means to execute these simulations en masse.
+As an alternative, we have provided the output from all of our [completed simulations](https://arch.library.northwestern.edu/concern/generic_works/n296wz31t?locale=en) along with a series of [Jupyter notebooks](https://github.com/sebastianbernasek/GRaM/tree/master/notebooks) that walk the user through the steps necessary to analyze these results and reproduce each of our figures. The notebooks also provide users with an opportunity to set up and execute each type of simulation that appears in our manuscript. We leave it to the user to design a means to execute these simulations en masse.
 
 
 Package Contents
