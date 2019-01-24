@@ -21,9 +21,9 @@ Supporting Data
 
 Supporting data are publicly available for [download](https://arch.library.northwestern.edu/concern/generic_works/n296wz31t?locale=en). Two files are required to reproduce our results:
 
-**simulations.zip** (~30 MB) contains the completed output from each of our simulations.
+[simulations.zip](https://arch.library.northwestern.edu/concern/parent/n296wz31t/file_sets/8c97kq60n) (~30 MB) contains the completed output from each of our simulations.
 
-**measurements.zip** (~1.4 GB) contains segmented and annotated wildtype and miR7-delta eye discs from animals raised under normal metabolic conditions and in animals subject to IPC ablation.
+[measurements.zip](https://arch.library.northwestern.edu/concern/parent/n296wz31t/file_sets/6h440s67b) (~1.4 GB) contains segmented and annotated wildtype and miR7-delta eye discs from animals raised under normal metabolic conditions and in animals subject to IPC ablation.
 
 Download each of these files, then unzip their contents to a common directory. In order to successfully run the provided Jupyter notebooks you will need to point the ``../data`` filepath toward this directory.
 
