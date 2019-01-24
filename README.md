@@ -1,5 +1,5 @@
-Overview
-========
+Repository Overview
+-------------------
 
 This repository and its dependencies contain all of the code necessary to reproduce our study of the relationship between Gene Regulation and Metabolism (GRaM). The code offers two primary functions:
 
@@ -8,8 +8,16 @@ This repository and its dependencies contain all of the code necessary to reprod
   2. Quantifying Yan protein expression dynamics in the Drosophila eye. Yan level measurements were extracted from confocal microscopy data using [FlyEye Silhouette](http://www.silhouette.amaral.northwestern.edu/), our macOS platform for eye cell segmentation and annotation. The annotated `.silhouette` files are available in our [data repository](https://arch.library.northwestern.edu/concern/generic_works/n296wz31t?locale=en). We analyzed these measurements using [FlyEye Analysis](https://github.com/sebastianbernasek/flyeye), our pipeline for analyzing FlyEye Silhouette data.
 
 
+Note on Reproducibility
+-----------------------
+
+This repository contains all of the code used to generate the content in our manuscript. Please note that the vast majority of our figures are based on large-scale simulations that were executed on a high performance computing cluster. These simulations are therefore not well suited for reproduction on a personal computer. We have provided the scripts necessary to reproduce all of our results, but we caution that their direct execution would take a very long time.
+
+As an alternative, we have also provided the output from all of our [completed simulations](https://arch.library.northwestern.edu/concern/generic_works/n296wz31t?locale=en) along with a series of [Jupyter notebooks](https://github.com/sebastianbernasek/GRaM/tree/master/notebooks) that walk the user through the steps necessary to analyze these results and reproduce each of our figures. The notebooks also provide users with an opportunity to set up and execute each type of individual simulation that appears in our manuscript. We leave it to the user to design a means to execute these simulations en masse.
+
+
 Supporting Data
-===============
+---------------
 
 Supporting data are publicly available for [download](https://arch.library.northwestern.edu/concern/generic_works/n296wz31t?locale=en). Two files are required to reproduce our results:
 
@@ -46,13 +54,6 @@ The simplest method is to install it via ``pip``:
 
     pip install gram-1.0.tar.gz
 
-
-Reproducing our Results
-=======================
-
-This repository contains all of the code used to generate the content in our manuscript. However, please note that the vast majority of our figures are based on large-scale simulations that were executed on a high performance computing cluster. These simulations are therefore not well suited for reproduction on a personal computer. While we have provided the scripts necessary to reproduce all of our results, their direct execution would be impractical.
-
-As an alternative, we have provided the output from all of our [completed simulations](https://arch.library.northwestern.edu/concern/generic_works/n296wz31t?locale=en) along with a series of [Jupyter notebooks](https://github.com/sebastianbernasek/GRaM/tree/master/notebooks) that walk the user through the steps necessary to analyze these results and reproduce each of our figures. The notebooks also provide users with an opportunity to set up and execute each type of simulation that appears in our manuscript. We leave it to the user to design a means to execute these simulations en masse.
 
 
 Package Contents
@@ -91,7 +92,6 @@ The GRaM package contains several python scripts in ``gram/scripts``. Those that
   * ``run_batch.py`` runs a batch of ``ConditionSimulation`` instances.
 
 
-
 Jupyter Notebooks
 -----------------
 
@@ -108,16 +108,6 @@ Jupyter Notebooks
 Additional Resources
 ====================
 
-
-Examples
---------
-
-For examples detailing the usage of our stochastic simulation software, please see [GeneSSA](https://github.com/sebastianbernasek/genessa).
-
-For examples demonstrating the analysis of protein expression in the Drosophila eye, please see [FlyEye Analysis](https://github.com/sebastianbernasek/flyeye).
-
-
-Contact
--------
+For examples detailing the usage of our stochastic simulation software, please see [GeneSSA](https://github.com/sebastianbernasek/genessa). For examples demonstrating the analysis of protein expression in the Drosophila eye, please see [FlyEye Analysis](https://github.com/sebastianbernasek/flyeye).
 
 Please contact the [Amaral Lab](https://amaral.northwestern.edu/) with any questions regarding GRaM, GeneSSA, or the FlyEye suite. We will make an effort to get back to you within a reasonable timeframe.
