@@ -705,9 +705,23 @@ class PromoterComparison(Comparison):
     """
 
     @property
+    def threshold(self):
+        """ Commitment threshold. """
+        #return self.reference.peaks[self.dim] * self.fraction_of_max
+        return self.lower[self._comparison_index]
+
+    @property
     def _comparison_index(self):
-        """ Index of time at which reference reaches threshold. """
-        indices = self.reference.index(self.threshold, self.dim, mode='lower')
+        """ 
+        Index of time at which reference reaches threshold. 
+        
+        ** NOT USED FOR THRESHOLD - this is just to determine integration range
+        ** THRESHOLD USES PEAK (see below)
+
+        """
+        
+        endpoint = self.reference.peaks[self.dim] * self.fraction_of_max
+        indices = self.reference.index(endpoint, self.dim, mode='lower')
 
         if indices.size == 0 or indices[-1] == 0:
             return None

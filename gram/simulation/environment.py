@@ -359,7 +359,7 @@ class ConditionSimulation(PerturbationSimulation):
         self.seed = seed
         self.complete = True
 
-    def plot_comparison(self, trajectories=False, axes=None, threshold=-1):
+    def plot_comparison(self, trajectories=False, axes=None, threshold=-1, size=1):
         """
         Visualize comparison for each environmental condition.
 
@@ -371,12 +371,14 @@ class ConditionSimulation(PerturbationSimulation):
 
             threshold (int) - index of threshold displayed
 
+            size (float) - scaling factor for figure size
+
         """
 
         # create axes if none were provided
         if axes is None:
             ncols = self.N
-            figsize=(ncols*2.5, 2)
+            figsize=(ncols*2.5*size, 2*size)
             fig, axes = plt.subplots(1, ncols, sharey=True, figsize=figsize)
 
         # visualize comparison under each condition
@@ -396,6 +398,8 @@ class ConditionSimulation(PerturbationSimulation):
         axes[0].set_ylabel('Protein level')
 
         plt.tight_layout()
+
+        return fig
 
     def plot_dynamics(self, dim=-1, trajectories=False, axes=None):
         """

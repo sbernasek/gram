@@ -150,7 +150,7 @@ class PerturbationSimulation(PulseSimulation):
         if mode == 'promoters':
             comparison = PromoterComparison(reference, compared, **kwargs)
         elif mode == 'gaussian':
-            comparison = CDFComparison(reference, compared, **kwargs)
+            comparison = GaussianComparison(reference, compared, **kwargs)
         elif mode == 'multi':
             comparison = MultiComparison(reference, compared, **kwargs)
         else:
